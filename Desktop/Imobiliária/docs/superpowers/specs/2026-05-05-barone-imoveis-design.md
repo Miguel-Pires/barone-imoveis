@@ -27,7 +27,9 @@
 
 ### Proteção Admin
 
-Middleware Next.js verifica cookie `admin_secret` ou query param `?secret=`. Se não bater com `process.env.ADMIN_SECRET`, retorna 403. Sem login, sem JWT, sem sessions.
+Middleware Next.js verifica **cookie `admin_secret`** ou **header `x-admin-secret`**. Query param (`?secret=`) removido em produção — expõe o secret em logs de servidor e analytics. Se não bater com `process.env.ADMIN_SECRET`, retorna 403. Sem login, sem JWT, sem sessions.
+
+Login inicial: POST `/api/admin/auth` com body `{ secret }` → seta cookie `admin_secret` (httpOnly, sameSite=strict, secure em produção).
 
 ### Variáveis de Ambiente
 
@@ -127,6 +129,8 @@ parking integer
 latitude numeric
 longitude numeric
 is_launch boolean
+urgency_text text (null = não exibe microcopy)
+views_count integer default 0
 created_at timestamptz
 ```
 
@@ -147,26 +151,44 @@ created_at timestamptz
 
 ### `/` — Listagem
 
-- SSR
+- SSR + ISR (`revalidate = 60`)
 - Cards: imagem principal, título, bairro + cidade, preço ou "Sob consulta", quartos, m²
 - Filtros client-side: cidade · preço (range) · quartos
 - SEO: metadata estático
 
 ### `/imovel/[slug]` — Detalhe
 
+- ISR com `revalidate = 60` — dados frescos sem rebuild completo
+
+**Slug otimizado para SEO:**  
+Formato: `{titulo-kebab}-{bairro}-{cidade}-{estado}`  
+Exemplo: `vibra-rio-bonito-rio-bonito-sao-paulo-sp`
+
 Ordem obrigatória das seções:
 
-1. **Hero** — título, localização, badge de status, tipologia, prova social fake ("+700 pessoas visualizaram"), botão WhatsApp primário
+1. **Hero**
+   - Título, localização, badge de status, tipologia
+   - **Microcopy de escassez:** ex. "Últimas unidades disponíveis" (configurável por imóvel via campo `urgency_text`)
+   - **Prova social dinâmica:** contador baseado em leads + views do imóvel, ex. "+{n} pessoas demonstraram interesse" — cálculo server-side, fallback para valor fixo se sem dados
+   - Botão WhatsApp primário
 2. **Galeria** — carrossel responsivo com `next/image`
 3. **Informações Rápidas** — grid de ícones: quartos, m², vagas, banheiros
 4. **Descrição** — texto descritivo do imóvel
 5. **Diferenciais** — lista dinâmica de `property_features`
 6. **Amenidades** — grid dinâmico de `property_amenities`
 7. **Plantas** — galeria de imagens de `property_floorplans` + botão download por planta
-8. **Localização** — iframe Google Maps embed via `lat/lng` (sem API key, URL pública)
-9. **Formulário de Lead** — campos: nome, telefone, interesse → INSERT em `leads`
+8. **Localização** — iframe Google Maps embed via `lat/lng` (sem API key, URL pública) + botão "Abrir no Google Maps" (link externo com coordenadas)
+9. **Formulário de Lead (sticky mobile)**
+   - Fixo no bottom em mobile, inline no desktop
+   - Campos: nome (opcional) · telefone (obrigatório) · interesse (select)
+   - Validação client-side: telefone com máscara BR
+   - → INSERT em `leads`
+   - Após submit: mensagem de sucesso + disparo automático de WhatsApp pré-preenchido
 
-**SEO dinâmico:** `generateMetadata` com title + description + Schema.org `RealEstateListing`
+**SEO dinâmico:**
+- `generateMetadata`: title = `{Título} | {Quartos} quartos em {Bairro}, {Cidade}` — otimizado para busca com localização
+- description focada em conversão: destaca diferencial principal + CTA implícito
+- Schema.org `RealEstateListing` completo (nome, descrição, endereço, preço, imagens)
 
 ---
 
@@ -187,6 +209,16 @@ Em páginas sem contexto de imóvel, mensagem genérica.
 - **Meta Pixel:** via `<Script>` no layout, ID via `NEXT_PUBLIC_META_PIXEL_ID`
 - **Google Analytics:** via `@next/third-parties/google` ou `<Script>`, ID via `NEXT_PUBLIC_GA_ID`
 - Ambos opcionais — se vars não definidas, não carregam
+
+### Eventos Customizados
+
+| Evento | Quando dispara | Dados enviados |
+|--------|---------------|----------------|
+| `view_property` | Montagem da página `/imovel/[slug]` | `property_id`, `title`, `slug` |
+| `click_whatsapp` | Click no botão WhatsApp (flutuante ou hero) | `property_id`, `source` (hero/floating) |
+| `submit_lead` | Submit do formulário de lead com sucesso | `property_id`, `interest` |
+
+Disparados via helper `trackEvent(name, data)` que chama `fbq('track')` e `gtag('event')` simultaneamente. Se nenhum está carregado, no-op silencioso.
 
 ---
 
@@ -252,7 +284,7 @@ Diferenciais: Varanda, Acabamento Premium, Área de Lazer Completa, Próximo ao 
 
 - `next/image` com `lazy` em todos os cards e galeria
 - `priority` apenas na imagem hero
-- SSR nas páginas principais (`/` e `/imovel/[slug]`)
+- SSR + ISR (`revalidate = 60`) nas páginas principais (`/` e `/imovel/[slug]`)
 - Filtros da listagem client-side para evitar re-render do servidor
 
 ---
