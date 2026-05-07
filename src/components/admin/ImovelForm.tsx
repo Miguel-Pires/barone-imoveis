@@ -357,7 +357,7 @@ export default function ImovelForm({ imovel }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className={labelCls}>Preço (R$) *</label>
-            <input type="number" className={inputCls} value={form.preco ?? 0} onChange={e => set('preco', Number(e.target.value))} required min={0} />
+            <input type="number" className={inputCls} value={form.preco || ''} onChange={e => set('preco', Number(e.target.value))} required min={0} />
           </div>
           <div>
             <label className={labelCls}>Condomínio (R$/mês)</label>
@@ -376,7 +376,7 @@ export default function ImovelForm({ imovel }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
             <label className={labelCls}>Área total (m²) *</label>
-            <input type="number" className={inputCls} value={form.areaTotal ?? 0} onChange={e => set('areaTotal', Number(e.target.value))} required min={1} />
+            <input type="number" className={inputCls} value={form.areaTotal || ''} onChange={e => set('areaTotal', Number(e.target.value))} required min={1} />
           </div>
           <div>
             <label className={labelCls}>Área útil (m²)</label>
@@ -384,19 +384,19 @@ export default function ImovelForm({ imovel }: Props) {
           </div>
           <div>
             <label className={labelCls}>Dormitórios *</label>
-            <input type="number" className={inputCls} value={form.quartos ?? 1} onChange={e => set('quartos', Number(e.target.value))} required min={0} max={20} />
+            <input type="number" className={inputCls} value={form.quartos || ''} onChange={e => set('quartos', Number(e.target.value))} required min={0} max={20} />
           </div>
           <div>
             <label className={labelCls}>Banheiros *</label>
-            <input type="number" className={inputCls} value={form.banheiros ?? 1} onChange={e => set('banheiros', Number(e.target.value))} required min={1} max={20} />
+            <input type="number" className={inputCls} value={form.banheiros || ''} onChange={e => set('banheiros', Number(e.target.value))} required min={1} max={20} />
           </div>
           <div>
             <label className={labelCls}>Vagas *</label>
-            <input type="number" className={inputCls} value={form.vagas ?? 0} onChange={e => set('vagas', Number(e.target.value))} required min={0} max={20} />
+            <input type="number" className={inputCls} value={form.vagas ?? ''} onChange={e => set('vagas', Number(e.target.value))} required min={0} max={20} />
           </div>
           <div>
             <label className={labelCls}>Suítes</label>
-            <input type="number" className={inputCls} value={form.suites ?? 0} onChange={e => set('suites', Number(e.target.value))} min={0} max={20} />
+            <input type="number" className={inputCls} value={form.suites || ''} onChange={e => set('suites', Number(e.target.value))} min={0} max={20} />
           </div>
           <div>
             <label className={labelCls}>Andar da unidade</label>
