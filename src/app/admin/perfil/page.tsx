@@ -57,18 +57,18 @@ export default function AdminPerfilPage() {
 
   const inputCls = 'w-full border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm focus:border-[var(--color-gold)] outline-none transition-colors'
   const labelCls = 'block text-[10px] tracking-widest uppercase text-gray-400 mb-1.5'
-  const sectionCls = 'bg-white border border-[var(--color-border)] p-6 mb-6'
+  const sectionCls = 'bg-white border border-[var(--color-border)] p-4 md:p-6 mb-4 md:mb-6'
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="max-w-2xl mx-auto px-4 py-6 md:px-6 md:py-12">
         <p className="text-gray-400 text-sm">Carregando perfil...</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-12">
+    <div className="max-w-2xl mx-auto px-4 py-6 md:px-6 md:py-12">
       <div className="mb-8">
         <p className="text-[10px] tracking-[0.25em] text-[var(--color-gold)] uppercase mb-2">Configurações</p>
         <h1 className="text-3xl font-light text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-serif)' }}>

@@ -10,7 +10,7 @@ export default async function AdminDashboard() {
   const vendidos = todos.filter(i => i.statusAnuncio === 'vendido')
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
+    <div className="max-w-6xl mx-auto px-4 py-6 md:px-6 md:py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-light text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-serif)' }}>
           Dashboard

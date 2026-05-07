@@ -193,7 +193,7 @@ export default function ImovelForm({ imovel }: Props) {
 
   const inputCls = 'w-full border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm focus:border-[var(--color-gold)] outline-none transition-colors'
   const labelCls = 'block text-[10px] tracking-widest uppercase text-gray-400 mb-1.5'
-  const sectionCls = 'bg-white border border-[var(--color-border)] p-6 mb-6'
+  const sectionCls = 'bg-white border border-[var(--color-border)] p-4 md:p-6 mb-4 md:mb-6'
 
   return (
     <form onSubmit={handleSubmit}>
@@ -403,9 +403,9 @@ export default function ImovelForm({ imovel }: Props) {
         {(form.plantasBaixas ?? []).length > 0 && (
           <div className="space-y-4 mb-6">
             {(form.plantasBaixas ?? []).map(planta => (
-              <div key={planta.id} className="border border-[var(--color-border)] p-4 grid grid-cols-[120px_1fr] gap-4 items-start">
+              <div key={planta.id} className="border border-[var(--color-border)] p-4 grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-4 items-start">
                 {/* Thumbnail */}
-                <div className="relative group aspect-[4/3] bg-[var(--color-warm-gray)] overflow-hidden">
+                <div className="relative group aspect-[4/3] sm:aspect-[4/3] bg-[var(--color-warm-gray)] overflow-hidden sm:w-auto w-full max-h-40 sm:max-h-none">
                   <img src={planta.imagemUrl} alt={planta.titulo} className="w-full h-full object-contain" />
                   <button
                     type="button"
@@ -539,19 +539,19 @@ export default function ImovelForm({ imovel }: Props) {
       </div>
 
       {/* Ações */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             type="submit"
             disabled={saving}
-            className="bg-[var(--color-gold)] text-white px-8 py-3.5 text-xs tracking-widest uppercase font-medium hover:bg-[var(--color-dark)] transition-colors disabled:opacity-50"
+            className="bg-[var(--color-gold)] text-white px-8 py-4 text-xs tracking-widest uppercase font-medium hover:bg-[var(--color-dark)] transition-colors disabled:opacity-50"
           >
             {saving ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Criar Imóvel'}
           </button>
           <button
             type="button"
             onClick={() => router.push('/admin/imoveis')}
-            className="border border-[var(--color-border)] text-gray-500 px-8 py-3.5 text-xs tracking-widest uppercase hover:border-[var(--color-dark)] hover:text-[var(--color-dark)] transition-colors"
+            className="border border-[var(--color-border)] text-gray-500 px-8 py-4 text-xs tracking-widest uppercase hover:border-[var(--color-dark)] hover:text-[var(--color-dark)] transition-colors"
           >
             Cancelar
           </button>
@@ -561,7 +561,7 @@ export default function ImovelForm({ imovel }: Props) {
           <button
             type="button"
             onClick={handleDelete}
-            className="text-red-400 hover:text-red-600 text-xs tracking-widest uppercase transition-colors"
+            className="text-red-400 hover:text-red-600 text-xs tracking-widest uppercase transition-colors py-2"
           >
             Excluir Imóvel
           </button>
