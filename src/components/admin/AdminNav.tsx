@@ -43,6 +43,12 @@ export default function AdminNav() {
         >
           + Novo Imóvel
         </Link>
+        <Link
+          href="/admin/perfil"
+          className="text-xs tracking-wide text-gray-400 hover:text-white transition-colors uppercase"
+        >
+          Meu Perfil
+        </Link>
       </div>
 
       <div className="flex items-center gap-4">

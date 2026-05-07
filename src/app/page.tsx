@@ -1,16 +1,16 @@
-import { getImoveis } from '@/lib/db'
+import { getImoveis, getCorretor } from '@/lib/db'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ImovelCard from '@/components/ImovelCard'
 import WhatsAppFloat from '@/components/WhatsAppFloat'
 
-const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP ?? '5511940726116'
 const WHATSAPP_CONTATO = encodeURIComponent('Olá, gostaria de agendar uma visita ou tirar dúvidas sobre imóveis.')
 
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const imoveis = await getImoveis(true)
+  const [imoveis, corretor] = await Promise.all([getImoveis(true), getCorretor()])
+  const WHATSAPP = corretor.whatsapp
   const destaques = imoveis.filter(i => i.destaque)
   const outros = imoveis.filter(i => !i.destaque)
 
@@ -79,25 +79,6 @@ export default async function HomePage() {
           </a>
         </section>
 
-        {/* Stats */}
-        <section className="bg-[var(--color-warm-gray)] border-y border-[var(--color-border)]">
-          <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { num: '10+', label: 'Anos de experiência' },
-              { num: '200+', label: 'Imóveis negociados' },
-              { num: '4', label: 'Bairros no centro' },
-              { num: '100%', label: 'Atendimento exclusivo' },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-light text-[var(--color-gold)] mb-1" style={{ fontFamily: 'var(--font-serif)' }}>
-                  {stat.num}
-                </p>
-                <p className="text-xs tracking-wide text-gray-500 uppercase">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* Imóveis */}
         <section id="imoveis" className="max-w-7xl mx-auto px-6 py-24">
           {destaques.length > 0 && (
@@ -141,16 +122,27 @@ export default async function HomePage() {
             <div>
               <p className="text-[var(--color-gold)] text-xs tracking-[0.3em] uppercase mb-4">Quem somos</p>
               <h2 className="text-4xl md:text-5xl font-light text-white mb-8 leading-tight" style={{ fontFamily: 'var(--font-serif)' }}>
-                Barone Imóveis — <em className="not-italic text-[var(--color-gold-light)]">Expertise</em> no Centro de SP
+                {corretor.nome} — <em className="not-italic text-[var(--color-gold-light)]">Expertise</em> no Centro de SP
               </h2>
+              {corretor.fotoPerfil && (
+                <div className="flex items-center gap-4 mb-8">
+                  <img
+                    src={corretor.fotoPerfil}
+                    alt={corretor.nome}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-[var(--color-gold)]"
+                  />
+                  <div>
+                    <p className="text-white font-light">{corretor.nome}</p>
+                    {corretor.especialidade && <p className="text-xs text-gray-400">{corretor.especialidade}</p>}
+                    {corretor.creci && <p className="text-xs text-[var(--color-gold)]">CRECI {corretor.creci}</p>}
+                  </div>
+                </div>
+              )}
               <p className="text-gray-400 font-light leading-relaxed mb-6">
-                Corretor especializado no mercado imobiliário do centro de São Paulo. Foco em
-                bairros República, Higienópolis, Santa Cecília e Vila Buarque — regiões em
-                constante valorização com novos empreendimentos e renascimento urbano.
+                {corretor.bio || 'Corretor especializado em imóveis de alto padrão no centro de São Paulo — região em constante valorização, com empreendimentos modernos e excelente infraestrutura urbana.'}
               </p>
               <p className="text-gray-400 font-light leading-relaxed mb-10">
-                Atendimento 100% personalizado, do primeiro contato ao registro em cartório.
-                Cada imóvel é selecionado com critério de qualidade e potencial de valorização.
+                {corretor.bio2 || 'Atendimento 100% personalizado, do primeiro contato ao registro em cartório. Cada imóvel é selecionado com critério de qualidade e potencial de valorização.'}
               </p>
               <a
                 href={`https://wa.me/${WHATSAPP}?text=${WHATSAPP_CONTATO}`}
@@ -161,13 +153,23 @@ export default async function HomePage() {
                 Agendar Conversa
               </a>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {['República', 'Higienópolis', 'Santa Cecília', 'Vila Buarque'].map((bairro) => (
-                <div key={bairro} className="border border-gray-800 hover:border-[var(--color-gold)] p-6 transition-colors">
-                  <p className="text-lg font-light text-white mb-1" style={{ fontFamily: 'var(--font-serif)' }}>{bairro}</p>
-                  <p className="text-xs text-gray-600 tracking-wide">Centro de São Paulo</p>
+            <div className="relative">
+              {corretor.fotoCapa ? (
+                <img
+                  src={corretor.fotoCapa}
+                  alt={`${corretor.nome} — foto de capa`}
+                  className="w-full h-80 object-cover border border-gray-800"
+                />
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {['República', 'Higienópolis', 'Santa Cecília', 'Vila Buarque'].map((bairro) => (
+                    <div key={bairro} className="border border-gray-800 hover:border-[var(--color-gold)] p-6 transition-colors">
+                      <p className="text-lg font-light text-white mb-1" style={{ fontFamily: 'var(--font-serif)' }}>{bairro}</p>
+                      <p className="text-xs text-gray-600 tracking-wide">Centro de São Paulo</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </section>

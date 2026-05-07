@@ -1,19 +1,28 @@
 'use client'
 
-const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP ?? '5511940726116'
-const MSG = encodeURIComponent('Olá, gostaria de mais informações sobre os imóveis disponíveis.')
+interface Props {
+  whatsapp?: string
+  titulo?: string
+  imovelUrl?: string
+}
 
-export default function WhatsAppFloat() {
+export default function WhatsAppFloat({ whatsapp, titulo, imovelUrl }: Props) {
+  const numero = whatsapp ?? process.env.NEXT_PUBLIC_WHATSAPP ?? '5511940726116'
+
+  const msg = titulo && imovelUrl
+    ? encodeURIComponent(`Olá! Tenho interesse no imóvel *${titulo}*.\n\nLink: ${imovelUrl}\n\nPoderia me dar mais informações?`)
+    : encodeURIComponent('Olá, gostaria de mais informações sobre os imóveis disponíveis.')
+
   return (
     <a
-      href={`https://wa.me/${WHATSAPP}?text=${MSG}`}
+      href={`https://wa.me/${numero}?text=${msg}`}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 flex items-center bg-[#25D366] text-white rounded-full shadow-lg hover:bg-[#20B954] transition-colors group"
       aria-label="Conversar pelo WhatsApp"
     >
       <span className="hidden md:block text-sm font-medium pl-5 pr-1 py-3.5 max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 whitespace-nowrap">
-        Fale conosco
+        {titulo ? 'Tenho interesse' : 'Fale conosco'}
       </span>
       <span className="whatsapp-pulse flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366]">
         <svg className="w-7 h-7 fill-white" viewBox="0 0 24 24">

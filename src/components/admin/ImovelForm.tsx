@@ -50,7 +50,8 @@ export default function ImovelForm({ imovel }: Props) {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
-  const plantaRef = useRef<HTMLInputElement>(null)
+  const plantaUnidadeRef = useRef<HTMLInputElement>(null)
+  const plantaEdificioRef = useRef<HTMLInputElement>(null)
 
   const isEdit = !!imovel
 
@@ -93,23 +94,32 @@ export default function ImovelForm({ imovel }: Props) {
   }
 
   async function handlePlanta(e: React.ChangeEvent<HTMLInputElement>, tipo: 'unidade' | 'edificio') {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
     setUploading(true)
-    const url = await uploadFoto(file)
-    if (url) {
-      const nova: PlantaBaixa = {
-        id: uuidv4(),
-        titulo: file.name.replace(/\.[^.]+$/, ''),
-        tipologia: tipo === 'unidade' ? 'Apartamento' : 'Edifício',
-        areaTotal: 0,
-        imagemUrl: url,
-        tipo,
+    for (const file of files) {
+      const url = await uploadFoto(file)
+      if (url) {
+        const nova: PlantaBaixa = {
+          id: uuidv4(),
+          titulo: file.name.replace(/\.[^.]+$/, ''),
+          tipologia: tipo === 'unidade' ? 'Apartamento' : 'Edifício',
+          areaTotal: 0,
+          imagemUrl: url,
+          tipo,
+        }
+        setForm(prev => ({ ...prev, plantasBaixas: [...(prev.plantasBaixas ?? []), nova] }))
       }
-      setForm(prev => ({ ...prev, plantasBaixas: [...(prev.plantasBaixas ?? []), nova] }))
     }
     setUploading(false)
     e.target.value = ''
+  }
+
+  function updatePlanta(id: string, field: keyof PlantaBaixa, value: unknown) {
+    setForm(prev => ({
+      ...prev,
+      plantasBaixas: (prev.plantasBaixas ?? []).map(p => p.id === id ? { ...p, [field]: value } : p),
+    }))
   }
 
   function removerImagem(id: string) {
@@ -386,62 +396,119 @@ export default function ImovelForm({ imovel }: Props) {
 
       {/* Plantas Baixas */}
       <div className={sectionCls}>
-        <h2 className="text-lg font-light mb-6" style={{ fontFamily: 'var(--font-serif)' }}>Plantas Baixas</h2>
+        <h2 className="text-lg font-light mb-2" style={{ fontFamily: 'var(--font-serif)' }}>Plantas Baixas</h2>
+        <p className="text-xs text-gray-400 mb-6">Você pode adicionar múltiplas variações (tipos A, B, C ou por metragem). Edite o título, tipologia e área após o upload.</p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          {(form.plantasBaixas ?? []).map(planta => (
-            <div key={planta.id} className="relative group">
-              <div className="aspect-[4/3] bg-[var(--color-warm-gray)] overflow-hidden border border-[var(--color-border)]">
-                <img src={planta.imagemUrl} alt={planta.titulo} className="w-full h-full object-contain" />
-                <button
-                  type="button"
-                  onClick={() => removerPlanta(planta.id)}
-                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ×
-                </button>
+        {/* Lista de plantas com edição inline */}
+        {(form.plantasBaixas ?? []).length > 0 && (
+          <div className="space-y-4 mb-6">
+            {(form.plantasBaixas ?? []).map(planta => (
+              <div key={planta.id} className="border border-[var(--color-border)] p-4 grid grid-cols-[120px_1fr] gap-4 items-start">
+                {/* Thumbnail */}
+                <div className="relative group aspect-[4/3] bg-[var(--color-warm-gray)] overflow-hidden">
+                  <img src={planta.imagemUrl} alt={planta.titulo} className="w-full h-full object-contain" />
+                  <button
+                    type="button"
+                    onClick={() => removerPlanta(planta.id)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Campos editáveis */}
+                <div className="space-y-2">
+                  <div>
+                    <label className={labelCls}>Título / Nome</label>
+                    <input
+                      className={inputCls}
+                      value={planta.titulo}
+                      onChange={e => updatePlanta(planta.id, 'titulo', e.target.value)}
+                      placeholder="Ex: Tipo A, Planta 84m²..."
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className={labelCls}>Tipologia</label>
+                      <input
+                        className={inputCls}
+                        value={planta.tipologia}
+                        onChange={e => updatePlanta(planta.id, 'tipologia', e.target.value)}
+                        placeholder="Ex: 3 dorms, Studio..."
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Área (m²)</label>
+                      <input
+                        type="number"
+                        className={inputCls}
+                        value={planta.areaTotal || ''}
+                        onChange={e => updatePlanta(planta.id, 'areaTotal', Number(e.target.value))}
+                        min={0}
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className={labelCls}>Tipo</label>
+                      <select
+                        className={inputCls}
+                        value={planta.tipo}
+                        onChange={e => updatePlanta(planta.id, 'tipo', e.target.value)}
+                      >
+                        <option value="unidade">Apartamento / Unidade</option>
+                        <option value="edificio">Edifício / Implantação</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Preço (R$)</label>
+                      <input
+                        type="number"
+                        className={inputCls}
+                        value={planta.preco ?? ''}
+                        onChange={e => updatePlanta(planta.id, 'preco', e.target.value ? Number(e.target.value) : undefined)}
+                        min={0}
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Descrição (opcional)</label>
+                    <input
+                      className={inputCls}
+                      value={planta.descricao ?? ''}
+                      onChange={e => updatePlanta(planta.id, 'descricao', e.target.value)}
+                      placeholder="Detalhe extra..."
+                    />
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1 truncate">{planta.titulo}</p>
-              <span className={`text-[9px] tracking-widest uppercase px-1.5 py-0.5 ${
-                planta.tipo === 'unidade' ? 'bg-blue-50 text-blue-500' : 'bg-green-50 text-green-600'
-              }`}>
-                {planta.tipo}
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
+        {/* Botões de upload */}
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => {
-              plantaRef.current?.setAttribute('data-tipo', 'unidade')
-              plantaRef.current?.click()
-            }}
+            onClick={() => plantaUnidadeRef.current?.click()}
             disabled={uploading}
             className="flex-1 border border-dashed border-[var(--color-border)] hover:border-[var(--color-gold)] py-3 text-xs text-gray-400 hover:text-[var(--color-gold)] transition-colors disabled:opacity-50"
           >
-            + Planta do Apartamento
+            {uploading ? 'Enviando...' : '+ Planta do Apartamento'}
           </button>
           <button
             type="button"
-            onClick={() => {
-              plantaRef.current?.setAttribute('data-tipo', 'edificio')
-              plantaRef.current?.click()
-            }}
+            onClick={() => plantaEdificioRef.current?.click()}
             disabled={uploading}
             className="flex-1 border border-dashed border-[var(--color-border)] hover:border-[var(--color-gold)] py-3 text-xs text-gray-400 hover:text-[var(--color-gold)] transition-colors disabled:opacity-50"
           >
-            + Planta do Edifício
+            {uploading ? 'Enviando...' : '+ Planta do Edifício'}
           </button>
         </div>
-        <input
-          ref={plantaRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={e => handlePlanta(e, (plantaRef.current?.getAttribute('data-tipo') as 'unidade' | 'edificio') ?? 'unidade')}
-        />
+        <input ref={plantaUnidadeRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handlePlanta(e, 'unidade')} />
+        <input ref={plantaEdificioRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handlePlanta(e, 'edificio')} />
       </div>
 
       {/* Endereço */}

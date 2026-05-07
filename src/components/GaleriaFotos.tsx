@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Imagem } from '@/types/imovel'
 
 interface Props {
@@ -11,10 +11,57 @@ interface Props {
 export default function GaleriaFotos({ imagens, titulo }: Props) {
   const [ativa, setAtiva] = useState(0)
   const [lightbox, setLightbox] = useState(false)
+  const [animDir, setAnimDir] = useState<'left' | 'right' | null>(null)
+  const touchStartX = useRef<number | null>(null)
+  const didSwipe = useRef(false)
 
-  if (imagens.length === 0) {
+  const sorted = [...imagens].sort((a, b) => a.ordem - b.ordem)
+
+  const goTo = useCallback((idx: number, dir: 'left' | 'right') => {
+    setAnimDir(dir)
+    setTimeout(() => {
+      setAtiva(idx)
+      setAnimDir(null)
+    }, 150)
+  }, [])
+
+  const prev = useCallback(() => {
+    goTo((ativa - 1 + sorted.length) % sorted.length, 'right')
+  }, [ativa, sorted.length, goTo])
+
+  const next = useCallback(() => {
+    goTo((ativa + 1) % sorted.length, 'left')
+  }, [ativa, sorted.length, goTo])
+
+  useEffect(() => {
+    if (!lightbox) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') prev()
+      if (e.key === 'ArrowRight') next()
+      if (e.key === 'Escape') setLightbox(false)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [lightbox, prev, next])
+
+  function onTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.targetTouches[0].clientX
+    didSwipe.current = false
+  }
+
+  function onTouchEnd(e: React.TouchEvent, goNext: () => void, goPrev: () => void) {
+    if (touchStartX.current === null) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) {
+      didSwipe.current = true
+      diff > 0 ? goNext() : goPrev()
+    }
+    touchStartX.current = null
+  }
+
+  if (sorted.length === 0) {
     return (
-      <div className="w-full aspect-[16/7] bg-[var(--color-warm-gray)] flex items-center justify-center">
+      <div className="w-full bg-[var(--color-warm-gray)] aspect-[4/3] md:aspect-auto md:h-[65vh] flex items-center justify-center">
         <svg className="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
@@ -22,33 +69,31 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
     )
   }
 
-  const sorted = [...imagens].sort((a, b) => a.ordem - b.ordem)
-
-  const prev = () => setAtiva(i => (i - 1 + sorted.length) % sorted.length)
-  const next = () => setAtiva(i => (i + 1) % sorted.length)
-
   return (
     <>
-      <div className="w-full bg-[var(--color-dark)]">
+      <div className="w-full bg-[var(--color-dark)] select-none">
         {/* Imagem principal */}
         <div
-          className="relative cursor-zoom-in"
-          style={{ aspectRatio: '16/7', maxHeight: '70vh' }}
-          onClick={() => setLightbox(true)}
+          className="relative overflow-hidden w-full aspect-[4/3] md:aspect-auto md:h-[65vh] cursor-pointer md:cursor-zoom-in"
+          onClick={() => { if (!didSwipe.current) setLightbox(true) }}
+          onTouchStart={onTouchStart}
+          onTouchEnd={e => onTouchEnd(e, next, prev)}
         >
           <img
+            key={sorted[ativa].id}
             src={sorted[ativa].url}
             alt={sorted[ativa].alt}
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain object-center transition-opacity duration-200"
+            style={{ opacity: animDir ? 0 : 1 }}
+            draggable={false}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
-          {/* Navegação */}
           {sorted.length > 1 && (
             <>
               <button
-                onClick={(e) => { e.stopPropagation(); prev() }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 text-white hover:bg-black/80 transition-colors flex items-center justify-center backdrop-blur-sm"
+                onClick={e => { e.stopPropagation(); prev() }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 md:w-11 md:h-11 bg-black/50 hover:bg-black/80 active:bg-black/80 text-white transition-all flex items-center justify-center backdrop-blur-sm"
                 aria-label="Foto anterior"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -56,8 +101,8 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
                 </svg>
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); next() }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 text-white hover:bg-black/80 transition-colors flex items-center justify-center backdrop-blur-sm"
+                onClick={e => { e.stopPropagation(); next() }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 md:w-11 md:h-11 bg-black/50 hover:bg-black/80 active:bg-black/80 text-white transition-all flex items-center justify-center backdrop-blur-sm"
                 aria-label="Próxima foto"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -67,28 +112,47 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
             </>
           )}
 
-          <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-3 py-1.5 backdrop-blur-sm tracking-wide">
-            {ativa + 1} / {sorted.length}
-          </div>
+          {/* Dots — mobile */}
+          {sorted.length > 1 && sorted.length <= 15 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden pointer-events-auto">
+              {sorted.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={e => { e.stopPropagation(); goTo(idx, idx > ativa ? 'left' : 'right') }}
+                  className={`rounded-full transition-all ${idx === ativa ? 'w-5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'}`}
+                />
+              ))}
+            </div>
+          )}
 
-          <div className="absolute bottom-4 left-4 bg-black/60 text-white text-xs px-3 py-1.5 backdrop-blur-sm">
-            <svg className="w-4 h-4 inline mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-            </svg>
-            Ampliar
+          {/* Contador + ampliar */}
+          <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4 flex items-center gap-2">
+            <span className="hidden md:flex items-center gap-1.5 bg-black/60 text-white text-[10px] px-2.5 py-1.5 backdrop-blur-sm tracking-wide">
+              <svg className="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+              </svg>
+              Ampliar
+            </span>
+            <span className="bg-black/60 text-white text-[10px] px-2.5 py-1.5 backdrop-blur-sm tracking-widest">
+              {ativa + 1} / {sorted.length}
+            </span>
           </div>
         </div>
 
-        {/* Thumbnails */}
+        {/* Thumbnails — apenas desktop */}
         {sorted.length > 1 && (
-          <div className="flex gap-1 p-2 bg-black overflow-x-auto">
+          <div className="hidden md:flex bg-[#111] gap-1 p-1.5 overflow-x-auto">
             {sorted.map((img, idx) => (
               <button
                 key={img.id}
-                onClick={() => setAtiva(idx)}
-                className={`shrink-0 w-16 h-12 overflow-hidden transition-all ${idx === ativa ? 'ring-2 ring-[var(--color-gold)] opacity-100' : 'opacity-50 hover:opacity-80'}`}
+                onClick={() => goTo(idx, idx > ativa ? 'left' : 'right')}
+                className={`shrink-0 overflow-hidden transition-all duration-200 ${
+                  idx === ativa ? 'ring-2 ring-[var(--color-gold)] opacity-100' : 'opacity-40 hover:opacity-70'
+                }`}
+                style={{ width: 64, height: 44 }}
+                title={img.alt}
               >
-                <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+                <img src={img.url} alt={img.alt} className="w-full h-full object-cover" draggable={false} />
               </button>
             ))}
           </div>
@@ -98,45 +162,96 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
       {/* Lightbox */}
       {lightbox && (
         <div
-          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
-          onClick={() => setLightbox(false)}
+          className="fixed inset-0 z-[100] bg-black/97 flex items-center justify-center"
+          onClick={() => { if (!didSwipe.current) setLightbox(false) }}
+          onTouchStart={onTouchStart}
+          onTouchEnd={e => onTouchEnd(e, next, prev)}
         >
+          {/* Fechar */}
           <button
-            onClick={() => setLightbox(false)}
-            className="absolute top-4 right-4 text-white/70 hover:text-white p-2"
+            onClick={e => { e.stopPropagation(); setLightbox(false) }}
+            className="absolute top-4 right-4 text-white/60 hover:text-white active:text-white p-2 transition-colors z-10"
+            aria-label="Fechar"
           >
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
-          <button
-            onClick={(e) => { e.stopPropagation(); prev() }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-3"
+          {/* Anterior */}
+          {sorted.length > 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); prev() }}
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white active:text-white p-3 transition-colors z-10"
+              aria-label="Anterior"
+            >
+              <svg className="w-7 h-7 md:w-8 md:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Imagem */}
+          <div
+            className="flex items-center justify-center w-full h-full px-14 py-16"
+            onClick={e => e.stopPropagation()}
           >
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+            <img
+              key={sorted[ativa].id}
+              src={sorted[ativa].url}
+              alt={sorted[ativa].alt}
+              className="object-contain"
+              style={{ maxHeight: 'calc(100vh - 8rem)', maxWidth: 'calc(100vw - 7rem)' }}
+              draggable={false}
+            />
+          </div>
 
-          <img
-            src={sorted[ativa].url}
-            alt={sorted[ativa].alt}
-            className="max-w-[90vw] max-h-[90vh] object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+          {/* Próxima */}
+          {sorted.length > 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); next() }}
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white active:text-white p-3 transition-colors z-10"
+              aria-label="Próxima"
+            >
+              <svg className="w-7 h-7 md:w-8 md:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
 
-          <button
-            onClick={(e) => { e.stopPropagation(); next() }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-3"
-          >
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+          {/* Thumbnails — desktop */}
+          {sorted.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 hidden md:flex gap-1.5 max-w-[80vw] overflow-x-auto px-4">
+              {sorted.map((img, idx) => (
+                <button
+                  key={img.id}
+                  onClick={e => { e.stopPropagation(); goTo(idx, idx > ativa ? 'left' : 'right') }}
+                  className={`shrink-0 overflow-hidden transition-all ${
+                    idx === ativa ? 'ring-2 ring-[var(--color-gold)] opacity-100' : 'opacity-30 hover:opacity-60'
+                  }`}
+                  style={{ width: 52, height: 36 }}
+                >
+                  <img src={img.url} alt="" className="w-full h-full object-cover" draggable={false} />
+                </button>
+              ))}
+            </div>
+          )}
 
-          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/50 text-sm">
-            {ativa + 1} / {sorted.length} — {sorted[ativa].alt}
+          {/* Dots — mobile lightbox */}
+          {sorted.length > 1 && sorted.length <= 15 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 md:hidden">
+              {sorted.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={e => { e.stopPropagation(); goTo(idx, idx > ativa ? 'left' : 'right') }}
+                  className={`rounded-full transition-all ${idx === ativa ? 'w-5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/40'}`}
+                />
+              ))}
+            </div>
+          )}
+
+          <p className="absolute bottom-14 md:bottom-4 left-1/2 -translate-x-1/2 text-white/30 text-xs tracking-wide whitespace-nowrap pointer-events-none">
+            {sorted[ativa].alt} · {ativa + 1}/{sorted.length}
           </p>
         </div>
       )}

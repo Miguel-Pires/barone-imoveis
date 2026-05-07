@@ -1,13 +1,12 @@
 import { notFound } from 'next/navigation'
-import { getImovelBySlug, getImoveis, formatPreco } from '@/lib/db'
+import { getImovelBySlug, getImoveis, formatPreco, getCorretor, getImoveisRelacionados } from '@/lib/db'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import WhatsAppFloat from '@/components/WhatsAppFloat'
 import GaleriaFotos from '@/components/GaleriaFotos'
 import PlantasBaixas from '@/components/PlantasBaixas'
+import ImovelCard from '@/components/ImovelCard'
 import type { Metadata } from 'next'
-
-const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP ?? '5511940726116'
 
 const TIPO_LABEL: Record<string, string> = {
   apartamento: 'Apartamento', cobertura: 'Cobertura', studio: 'Studio', loft: 'Loft', penthouse: 'Penthouse',
@@ -43,14 +42,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ImovelPage({ params }: Props) {
   const { slug } = await params
-  const imovel = await getImovelBySlug(slug)
+  const [imovel, corretor] = await Promise.all([getImovelBySlug(slug), getCorretor()])
   if (!imovel || imovel.statusAnuncio !== 'ativo') notFound()
+  const relacionados = await getImoveisRelacionados(imovel.id, imovel.tipo)
+
+  const WHATSAPP = corretor.whatsapp
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const imovelUrl = `${siteUrl}/imoveis/${imovel.slug}`
 
   const whatsappMsg = encodeURIComponent(
-    `Olá! Tenho interesse no imóvel "${imovel.titulo}" (${imovel.endereco.bairro}). Poderia me dar mais informações?`
-  )
-  const whatsappVisita = encodeURIComponent(
-    `Olá! Gostaria de agendar uma visita ao imóvel "${imovel.titulo}" em ${imovel.endereco.bairro}.`
+    `Olá! Tenho interesse no imóvel *${imovel.titulo}* em ${imovel.endereco.bairro}.\n\nLink: ${imovelUrl}\n\nPoderia me dar mais informações?`
   )
 
   return (
@@ -71,7 +72,7 @@ export default async function ImovelPage({ params }: Props) {
                 <span className="text-[var(--color-dark)]">{imovel.titulo}</span>
               </nav>
 
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-3 flex-wrap">
                 <span className="text-[10px] tracking-[0.25em] text-[var(--color-gold)] uppercase font-medium">
                   {TIPO_LABEL[imovel.tipo]} · {imovel.endereco.bairro}
                 </span>
@@ -138,19 +139,40 @@ export default async function ImovelPage({ params }: Props) {
                 <PlantasBaixas plantas={imovel.plantasBaixas} />
               )}
 
-              {/* Endereço */}
+              {/* Localização */}
               <div className="mb-12">
                 <h2 className="text-2xl font-light text-[var(--color-dark)] mb-4 gold-line" style={{ fontFamily: 'var(--font-serif)' }}>
                   Localização
                 </h2>
-                <p className="text-gray-600 mt-6">
+                <p className="text-gray-600 mt-6 mb-5">
                   {imovel.endereco.rua}, {imovel.endereco.numero}
                   {imovel.endereco.complemento && ` — ${imovel.endereco.complemento}`}
-                  <br />
-                  {imovel.endereco.bairro} · {imovel.endereco.cidade}/{imovel.endereco.estado}
-                  <br />
-                  CEP {imovel.endereco.cep}
+                  {' · '}{imovel.endereco.bairro}, {imovel.endereco.cidade}/{imovel.endereco.estado}
+                  {imovel.endereco.cep && ` · CEP ${imovel.endereco.cep}`}
                 </p>
+                <div className="relative w-full rounded-none overflow-hidden border border-[var(--color-border)]" style={{ height: 320 }}>
+                  <iframe
+                    title="Localização no mapa"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(`${imovel.endereco.rua} ${imovel.endereco.numero}, ${imovel.endereco.bairro}, ${imovel.endereco.cidade}, ${imovel.endereco.estado}`)}&output=embed&z=16`}
+                    width="100%"
+                    height="320"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+                <a
+                  href={`https://maps.google.com/maps?q=${encodeURIComponent(`${imovel.endereco.rua} ${imovel.endereco.numero}, ${imovel.endereco.bairro}, ${imovel.endereco.cidade}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-[var(--color-gold)] hover:text-[var(--color-dark)] transition-colors mt-3"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Abrir no Google Maps
+                </a>
               </div>
             </div>
 
@@ -169,7 +191,7 @@ export default async function ImovelPage({ params }: Props) {
                     </p>
                   )}
 
-                  <div className="border-t border-[var(--color-border)] pt-4 mt-4 space-y-4">
+                  <div className="border-t border-[var(--color-border)] pt-4 mt-4">
                     <a
                       href={`https://wa.me/${WHATSAPP}?text=${whatsappMsg}`}
                       target="_blank"
@@ -181,23 +203,31 @@ export default async function ImovelPage({ params }: Props) {
                       </svg>
                       Tenho Interesse
                     </a>
-                    <a
-                      href={`https://wa.me/${WHATSAPP}?text=${whatsappVisita}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full border border-[var(--color-gold)] text-[var(--color-gold)] py-3.5 text-sm tracking-widest uppercase hover:bg-[var(--color-gold)] hover:text-white transition-all"
-                    >
-                      Agendar Visita
-                    </a>
                   </div>
                 </div>
 
                 <div className="border border-[var(--color-border)] p-6 bg-[var(--color-warm-gray)]">
                   <p className="text-[10px] tracking-widest uppercase text-gray-400 mb-3">Corretor Responsável</p>
-                  <p className="text-lg font-light text-[var(--color-dark)] mb-1" style={{ fontFamily: 'var(--font-serif)' }}>
-                    Barone
-                  </p>
-                  <p className="text-xs text-gray-500 mb-4">CRECI 000000-F · Especialista Centro SP</p>
+                  <div className="flex items-center gap-3 mb-3">
+                    {corretor.fotoPerfil ? (
+                      <img
+                        src={corretor.fotoPerfil}
+                        alt={corretor.nome}
+                        className="w-12 h-12 rounded-full object-cover border border-[var(--color-border)] shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-[var(--color-gold)]/10 border border-[var(--color-border)] flex items-center justify-center shrink-0">
+                        <span className="text-[var(--color-gold)] text-sm font-light">{corretor.nome.charAt(0)}</span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-base font-light text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-serif)' }}>
+                        {corretor.nome}
+                      </p>
+                      {corretor.especialidade && <p className="text-xs text-gray-500">{corretor.especialidade}</p>}
+                      {corretor.creci && <p className="text-xs text-[var(--color-gold)]">CRECI {corretor.creci}</p>}
+                    </div>
+                  </div>
                   <div className="border-t border-[var(--color-border)] pt-4">
                     <p className="text-xs text-gray-400 mb-1">Localização</p>
                     <p className="text-xs text-gray-600">
@@ -209,9 +239,26 @@ export default async function ImovelPage({ params }: Props) {
             </div>
           </div>
         </div>
+
+        {/* Imóveis relacionados */}
+        {relacionados.length > 0 && (
+          <div className="border-t border-[var(--color-border)] bg-[var(--color-warm-gray)]">
+            <div className="max-w-7xl mx-auto px-6 py-16">
+              <div className="mb-8">
+                <p className="text-[10px] tracking-[0.3em] text-[var(--color-gold)] uppercase mb-2">Você também pode gostar</p>
+                <h2 className="text-2xl font-light text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-serif)' }}>
+                  Imóveis Relacionados
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {relacionados.map(r => <ImovelCard key={r.id} imovel={r} />)}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
-      <WhatsAppFloat />
+      <WhatsAppFloat whatsapp={WHATSAPP} titulo={imovel.titulo} imovelUrl={imovelUrl} />
     </>
   )
 }

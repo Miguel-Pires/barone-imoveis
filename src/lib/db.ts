@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase'
-import { Imovel, ImovelInput } from '@/types/imovel'
+import { Imovel, ImovelInput, CorretorPerfil } from '@/types/imovel'
 
 function slugify(text: string): string {
   return text
@@ -173,9 +173,74 @@ export async function updateImovel(id: string, input: Partial<ImovelInput>): Pro
   return rowToImovel(data)
 }
 
+export async function getImoveisRelacionados(id: string, tipo: string): Promise<Imovel[]> {
+  const { data } = await supabaseAdmin
+    .from('imoveis')
+    .select('*')
+    .eq('status_anuncio', 'ativo')
+    .neq('id', id)
+    .order('destaque', { ascending: false })
+    .limit(12)
+  if (!data) return []
+  const todos = data.map(rowToImovel)
+  const mesmotipo = todos.filter(i => i.tipo === tipo)
+  const outros = todos.filter(i => i.tipo !== tipo)
+  return [...mesmotipo, ...outros].slice(0, 3)
+}
+
+export function fakeViews(id: string): number {
+  let h = 0
+  for (let i = 0; i < id.length; i++) {
+    h = Math.imul(31, h) + id.charCodeAt(i) | 0
+  }
+  return 10 + Math.abs(h) % 241
+}
+
 export async function deleteImovel(id: string): Promise<boolean> {
   const { error } = await supabaseAdmin.from('imoveis').delete().eq('id', id)
   return !error
+}
+
+const CORRETOR_DEFAULT: CorretorPerfil = {
+  nome: 'Barone',
+  especialidade: 'Especialista Centro SP',
+  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP ?? '5511940726116',
+  email: 'baroneconsultordevendas@gmail.com',
+}
+
+export async function getCorretor(): Promise<CorretorPerfil> {
+  try {
+    const { data } = await supabaseAdmin.from('corretor_perfil').select('*').eq('id', 1).single()
+    if (!data) return CORRETOR_DEFAULT
+    return {
+      nome: data.nome ?? CORRETOR_DEFAULT.nome,
+      creci: data.creci ?? undefined,
+      especialidade: data.especialidade ?? CORRETOR_DEFAULT.especialidade,
+      bio: data.bio ?? undefined,
+      bio2: data.bio2 ?? undefined,
+      fotoPerfil: data.foto_perfil_url ?? undefined,
+      fotoCapa: data.foto_capa_url ?? undefined,
+      whatsapp: data.whatsapp ?? CORRETOR_DEFAULT.whatsapp,
+      email: data.email ?? undefined,
+    }
+  } catch {
+    return CORRETOR_DEFAULT
+  }
+}
+
+export async function updateCorretor(input: Partial<CorretorPerfil>): Promise<void> {
+  const updates: Record<string, unknown> = { atualizado_em: new Date().toISOString() }
+  if (input.nome !== undefined) updates.nome = input.nome
+  if (input.creci !== undefined) updates.creci = input.creci || null
+  if (input.especialidade !== undefined) updates.especialidade = input.especialidade
+  if (input.bio !== undefined) updates.bio = input.bio || null
+  if (input.bio2 !== undefined) updates.bio2 = input.bio2 || null
+  if (input.fotoPerfil !== undefined) updates.foto_perfil_url = input.fotoPerfil || null
+  if (input.fotoCapa !== undefined) updates.foto_capa_url = input.fotoCapa || null
+  if (input.whatsapp !== undefined) updates.whatsapp = input.whatsapp
+  if (input.email !== undefined) updates.email = input.email || null
+
+  await supabaseAdmin.from('corretor_perfil').upsert({ id: 1, ...updates })
 }
 
 export function formatPreco(valor: number): string {

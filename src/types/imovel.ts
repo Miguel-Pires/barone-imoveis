@@ -8,6 +8,7 @@ export interface PlantaBaixa {
   descricao?: string
   tipologia: string // ex: "2 dorms", "3 dorms"
   areaTotal: number
+  preco?: number
   imagemUrl: string
   tipo: 'edificio' | 'unidade'
 }
@@ -67,3 +68,15 @@ export interface Imovel {
 }
 
 export type ImovelInput = Omit<Imovel, 'id' | 'criadoEm' | 'atualizadoEm'>
+
+export interface CorretorPerfil {
+  nome: string
+  creci?: string
+  especialidade?: string
+  bio?: string
+  bio2?: string
+  fotoPerfil?: string
+  fotoCapa?: string
+  whatsapp: string
+  email?: string
+}
