@@ -12,29 +12,16 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[var(--color-border)]">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          {/* Monograma B */}
-          <svg viewBox="0 0 100 100" className="w-9 h-9 shrink-0" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100" height="100" rx="3" fill="#1A1A1A"/>
-            <rect x="17" y="13" width="66" height="1.5" fill="#B8975A"/>
-            <rect x="17" y="85.5" width="66" height="1.5" fill="#B8975A"/>
-            <rect x="21" y="20" width="10" height="60" fill="#B8975A"/>
-            <path d="M31 20 H55 Q73 20 73 36 Q73 52 55 52 H31 Z" fill="#B8975A"/>
-            <path d="M39 28 H53 Q64 28 64 36 Q64 44 53 44 H39 Z" fill="#1A1A1A"/>
-            <path d="M31 52 H57 Q79 52 79 66 Q79 80 57 80 H31 Z" fill="#B8975A"/>
-            <path d="M39 60 H55 Q70 60 70 66 Q70 72 55 72 H39 Z" fill="#1A1A1A"/>
-          </svg>
-          <div className="flex flex-col leading-none">
-            <span
-              className="text-2xl font-light tracking-widest text-[var(--color-dark)] group-hover:text-[var(--color-gold)] transition-colors"
-              style={{ fontFamily: 'var(--font-serif)' }}
-            >
-              BARONE
-            </span>
-            <span className="text-[9px] tracking-[0.3em] text-[var(--color-gold)] font-medium uppercase">
-              Imóveis
-            </span>
-          </div>
+        <Link href="/" className="flex flex-col leading-none group">
+          <span
+            className="text-2xl font-light tracking-widest text-[var(--color-dark)] group-hover:text-[var(--color-gold)] transition-colors"
+            style={{ fontFamily: 'var(--font-serif)' }}
+          >
+            BARONE
+          </span>
+          <span className="text-[9px] tracking-[0.3em] text-[var(--color-gold)] font-medium uppercase">
+            Imóveis
+          </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
