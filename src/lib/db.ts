@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase'
-import { Imovel, ImovelInput, CorretorPerfil } from '@/types/imovel'
+import { Imovel, ImovelInput, CorretorPerfil, Video } from '@/types/imovel'
 
 function slugify(text: string): string {
   return text
@@ -37,6 +37,7 @@ function rowToImovel(row: Record<string, unknown>): Imovel {
     diferenciais: (row.diferenciais as string[]) ?? [],
     imagens: (row.imagens as Imovel['imagens']) ?? [],
     plantasBaixas: (row.plantas_baixas as Imovel['plantasBaixas']) ?? [],
+    videos: (row.videos as Video[]) ?? [],
     endereco: row.endereco as Imovel['endereco'],
     nomeEmpreendimento: row.nome_empreendimento as string | undefined,
     construtora: row.construtora as string | undefined,
@@ -113,6 +114,7 @@ export async function createImovel(input: ImovelInput): Promise<Imovel> {
     diferenciais: input.diferenciais,
     imagens: input.imagens,
     plantas_baixas: input.plantasBaixas,
+    videos: input.videos ?? [],
     endereco: input.endereco,
     nome_empreendimento: input.nomeEmpreendimento ?? null,
     construtora: input.construtora ?? null,
@@ -157,6 +159,7 @@ export async function updateImovel(id: string, input: Partial<ImovelInput>): Pro
   if (input.diferenciais !== undefined) updates.diferenciais = input.diferenciais
   if (input.imagens !== undefined) updates.imagens = input.imagens
   if (input.plantasBaixas !== undefined) updates.plantas_baixas = input.plantasBaixas
+  if (input.videos !== undefined) updates.videos = input.videos
   if (input.endereco !== undefined) updates.endereco = input.endereco
   if (input.destaque !== undefined) updates.destaque = input.destaque
   if (input.nomeEmpreendimento !== undefined) updates.nome_empreendimento = input.nomeEmpreendimento

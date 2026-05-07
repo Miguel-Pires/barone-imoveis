@@ -139,6 +139,47 @@ export default async function ImovelPage({ params }: Props) {
                 <PlantasBaixas plantas={imovel.plantasBaixas} />
               )}
 
+              {/* Vídeos */}
+              {(imovel.videos ?? []).length > 0 && (
+                <div className="mb-12">
+                  <h2 className="text-2xl font-light text-[var(--color-dark)] mb-4 gold-line" style={{ fontFamily: 'var(--font-serif)' }}>
+                    Vídeos
+                  </h2>
+                  <div className="mt-6 space-y-8">
+                    {(imovel.videos ?? []).map(video => (
+                      <div key={video.id}>
+                        {video.titulo && (
+                          <p className="text-sm text-gray-500 mb-2">{video.titulo}</p>
+                        )}
+                        {video.tipo === 'youtube' && video.embedId ? (
+                          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                            <iframe
+                              src={`https://www.youtube.com/embed/${video.embedId}`}
+                              title={video.titulo ?? 'Vídeo'}
+                              className="absolute inset-0 w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          </div>
+                        ) : video.tipo === 'vimeo' && video.embedId ? (
+                          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                            <iframe
+                              src={`https://player.vimeo.com/video/${video.embedId}`}
+                              title={video.titulo ?? 'Vídeo'}
+                              className="absolute inset-0 w-full h-full"
+                              allow="autoplay; fullscreen; picture-in-picture"
+                              allowFullScreen
+                            />
+                          </div>
+                        ) : (
+                          <video src={video.url} controls className="w-full bg-black" style={{ maxHeight: 480 }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Localização */}
               <div className="mb-12">
                 <h2 className="text-2xl font-light text-[var(--color-dark)] mb-4 gold-line" style={{ fontFamily: 'var(--font-serif)' }}>

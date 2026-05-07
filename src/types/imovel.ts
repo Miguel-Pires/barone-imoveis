@@ -21,6 +21,14 @@ export interface Imagem {
   destaque?: boolean
 }
 
+export interface Video {
+  id: string
+  titulo?: string
+  tipo: 'youtube' | 'vimeo' | 'upload'
+  url: string
+  embedId?: string
+}
+
 export interface Endereco {
   rua: string
   numero: string
@@ -58,6 +66,7 @@ export interface Imovel {
   diferenciais: string[]
   imagens: Imagem[]
   plantasBaixas: PlantaBaixa[]
+  videos: Video[]
   endereco: Endereco
   nomeEmpreendimento?: string
   construtora?: string

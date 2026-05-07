@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Imovel, Imagem, PlantaBaixa } from '@/types/imovel'
+import { Imovel, Imagem, PlantaBaixa, Video } from '@/types/imovel'
 import { v4 as uuidv4 } from 'uuid'
 
 interface Props {
@@ -30,6 +30,7 @@ const DEFAULT: Partial<Imovel> = {
   diferenciais: [],
   imagens: [],
   plantasBaixas: [],
+  videos: [],
   endereco: {
     rua: '',
     numero: '',
@@ -49,9 +50,12 @@ export default function ImovelForm({ imovel }: Props) {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
+  const [videoError, setVideoError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const plantaUnidadeRef = useRef<HTMLInputElement>(null)
   const plantaEdificioRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLInputElement>(null)
 
   const isEdit = !!imovel
 
@@ -134,6 +138,50 @@ export default function ImovelForm({ imovel }: Props) {
       ...prev,
       plantasBaixas: (prev.plantasBaixas ?? []).filter(p => p.id !== id),
     }))
+  }
+
+  function parseVideoUrl(url: string): Pick<Video, 'tipo' | 'embedId'> | null {
+    const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+    if (yt) return { tipo: 'youtube', embedId: yt[1] }
+    const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+    if (vimeo) return { tipo: 'vimeo', embedId: vimeo[1] }
+    return null
+  }
+
+  function adicionarVideoUrl() {
+    setVideoError('')
+    const parsed = parseVideoUrl(videoUrl.trim())
+    if (!parsed) { setVideoError('URL inválida. Use um link do YouTube ou Vimeo.'); return }
+    const nova: Video = { id: uuidv4(), tipo: parsed.tipo, url: videoUrl.trim(), embedId: parsed.embedId }
+    setForm(prev => ({ ...prev, videos: [...(prev.videos ?? []), nova] }))
+    setVideoUrl('')
+  }
+
+  async function handleVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setVideoError('')
+    const url = await uploadFoto(file)
+    if (url) {
+      const novo: Video = { id: uuidv4(), tipo: 'upload', url }
+      setForm(prev => ({ ...prev, videos: [...(prev.videos ?? []), novo] }))
+    } else {
+      setVideoError('Erro ao enviar vídeo. Tente novamente.')
+    }
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  function updateVideo(id: string, field: keyof Video, value: unknown) {
+    setForm(prev => ({
+      ...prev,
+      videos: (prev.videos ?? []).map(v => v.id === id ? { ...v, [field]: value } : v),
+    }))
+  }
+
+  function removerVideo(id: string) {
+    setForm(prev => ({ ...prev, videos: (prev.videos ?? []).filter(v => v.id !== id) }))
   }
 
   function adicionarDiferencial() {
@@ -509,6 +557,76 @@ export default function ImovelForm({ imovel }: Props) {
         </div>
         <input ref={plantaUnidadeRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handlePlanta(e, 'unidade')} />
         <input ref={plantaEdificioRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handlePlanta(e, 'edificio')} />
+      </div>
+
+      {/* Vídeos */}
+      <div className={sectionCls}>
+        <h2 className="text-lg font-light mb-2" style={{ fontFamily: 'var(--font-serif)' }}>Vídeos</h2>
+        <p className="text-xs text-gray-400 mb-6">Cole um link do YouTube ou Vimeo, ou faça upload de um vídeo (MP4, MOV, WEBM).</p>
+
+        {(form.videos ?? []).length > 0 && (
+          <div className="space-y-3 mb-6">
+            {(form.videos ?? []).map(video => (
+              <div key={video.id} className="border border-[var(--color-border)] p-3 flex gap-3 items-start">
+                <div className="w-24 h-14 bg-[var(--color-dark)] shrink-0 overflow-hidden relative">
+                  {video.tipo === 'youtube' && video.embedId ? (
+                    <img src={`https://img.youtube.com/vi/${video.embedId}/mqdefault.jpg`} alt="" className="w-full h-full object-cover" />
+                  ) : video.tipo === 'upload' ? (
+                    <video src={video.url} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-[10px] text-[#1AB7EA] tracking-widest">VIMEO</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-black/60 flex items-center justify-center">
+                      <svg className="w-3 h-3 fill-white ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <input
+                    className={inputCls}
+                    value={video.titulo ?? ''}
+                    onChange={e => updateVideo(video.id, 'titulo', e.target.value)}
+                    placeholder="Título do vídeo (opcional)"
+                  />
+                  <p className="text-[10px] text-gray-400 truncate">
+                    {video.tipo === 'youtube' ? 'YouTube' : video.tipo === 'vimeo' ? 'Vimeo' : 'Upload'} · {video.embedId ?? video.url}
+                  </p>
+                </div>
+                <button type="button" onClick={() => removerVideo(video.id)} className="text-gray-400 hover:text-red-500 transition-colors text-xl shrink-0 leading-none">×</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2 mb-3">
+          <input
+            className={`${inputCls} flex-1`}
+            value={videoUrl}
+            onChange={e => setVideoUrl(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), adicionarVideoUrl())}
+            placeholder="Cole link do YouTube ou Vimeo..."
+          />
+          <button
+            type="button"
+            onClick={adicionarVideoUrl}
+            className="bg-[var(--color-gold)] text-white px-4 py-2.5 text-xs tracking-widest uppercase hover:bg-[var(--color-dark)] transition-colors shrink-0"
+          >
+            Adicionar
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => videoRef.current?.click()}
+          disabled={uploading}
+          className="w-full border border-dashed border-[var(--color-border)] hover:border-[var(--color-gold)] py-3 text-xs text-gray-400 hover:text-[var(--color-gold)] transition-colors disabled:opacity-50"
+        >
+          {uploading ? 'Enviando...' : '+ Upload de vídeo (MP4, MOV, WEBM — máx 200MB)'}
+        </button>
+        <input ref={videoRef} type="file" accept="video/mp4,video/quicktime,video/webm" className="hidden" onChange={handleVideoUpload} />
+        {videoError && <p className="text-xs text-red-500 mt-2">{videoError}</p>}
       </div>
 
       {/* Endereço */}
