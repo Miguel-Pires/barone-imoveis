@@ -50,6 +50,7 @@ export default function ImovelForm({ imovel }: Props) {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  const [dragging, setDragging] = useState(false)
   const [videoUrl, setVideoUrl] = useState('')
   const [videoError, setVideoError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -95,6 +96,50 @@ export default function ImovelForm({ imovel }: Props) {
     setForm(prev => ({ ...prev, imagens: [...(prev.imagens ?? []), ...novas] }))
     setUploading(false)
     e.target.value = ''
+  }
+
+  async function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragging(false)
+
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+    if (files.length > 0) {
+      setUploading(true)
+      const novas: Imagem[] = []
+      const ordem = form.imagens?.length ?? 0
+      for (const file of files) {
+        const url = await uploadFoto(file)
+        if (url) novas.push({ id: uuidv4(), url, alt: file.name.replace(/\.[^.]+$/, ''), ordem: ordem + novas.length })
+      }
+      setForm(prev => ({ ...prev, imagens: [...(prev.imagens ?? []), ...novas] }))
+      setUploading(false)
+      return
+    }
+
+    // Imagens arrastadas do navegador (URL)
+    const rawUrls = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain')
+    if (rawUrls) {
+      const urls = rawUrls.split(/\r?\n/).map(u => u.trim()).filter(u => u && !u.startsWith('#') && /^https?:\/\//i.test(u))
+      if (urls.length > 0) {
+        setUploading(true)
+        const novas: Imagem[] = []
+        const ordem = form.imagens?.length ?? 0
+        for (const srcUrl of urls) {
+          const res = await fetch('/api/upload-from-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: srcUrl }),
+          })
+          if (res.ok) {
+            const { url } = await res.json()
+            novas.push({ id: uuidv4(), url, alt: '', ordem: ordem + novas.length })
+          }
+        }
+        setForm(prev => ({ ...prev, imagens: [...(prev.imagens ?? []), ...novas] }))
+        setUploading(false)
+      }
+    }
   }
 
   async function handlePlanta(e: React.ChangeEvent<HTMLInputElement>, tipo: 'unidade' | 'edificio') {
@@ -396,48 +441,67 @@ export default function ImovelForm({ imovel }: Props) {
       {/* Fotos */}
       <div className={sectionCls}>
         <h2 className="text-lg font-light mb-2" style={{ fontFamily: 'var(--font-serif)' }}>Fotos</h2>
-        <p className="text-xs text-gray-400 mb-6">Clique na estrela (★) para definir a foto de capa</p>
+        <p className="text-xs text-gray-400 mb-4">Arraste fotos aqui, cole do navegador ou clique em "+" para selecionar. Toque na estrela (★) para definir a capa.</p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          {(form.imagens ?? []).map(img => (
-            <div key={img.id} className="relative group aspect-[4/3] bg-[var(--color-warm-gray)] overflow-hidden border border-[var(--color-border)]">
-              <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
-                <div className="absolute top-1 left-1">
+        <div
+          className={`relative rounded-sm transition-colors ${dragging ? 'bg-[var(--color-gold)]/5 ring-2 ring-[var(--color-gold)]' : ''}`}
+          onDragOver={e => { e.preventDefault(); setDragging(true) }}
+          onDragEnter={e => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }}
+          onDrop={handleDrop}
+        >
+          {dragging && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-gold)]/10 pointer-events-none">
+              <div className="flex flex-col items-center gap-2 text-[var(--color-gold)]">
+                <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <span className="text-sm font-medium tracking-widest uppercase">Solte aqui</span>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            {(form.imagens ?? []).map(img => (
+              <div key={img.id} className="relative group aspect-[4/3] bg-[var(--color-warm-gray)] overflow-hidden border border-[var(--color-border)]">
+                <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
+                  <div className="absolute top-1 left-1">
+                    <button
+                      type="button"
+                      onClick={() => setDestaque(img.id)}
+                      className={`text-lg leading-none ${img.destaque ? 'text-[var(--color-gold)]' : 'text-white/60 hover:text-white'}`}
+                      title="Definir como capa"
+                    >
+                      ★
+                    </button>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setDestaque(img.id)}
-                    className={`text-lg leading-none ${img.destaque ? 'text-[var(--color-gold)]' : 'text-white/60 hover:text-white'}`}
-                    title="Definir como capa"
+                    onClick={() => removerImagem(img.id)}
+                    className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    ★
+                    ×
                   </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removerImagem(img.id)}
-                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ×
-                </button>
+                {img.destaque && (
+                  <span className="absolute bottom-1 left-1 bg-[var(--color-gold)] text-white text-[9px] px-1.5 py-0.5 tracking-widest">CAPA</span>
+                )}
               </div>
-              {img.destaque && (
-                <span className="absolute bottom-1 left-1 bg-[var(--color-gold)] text-white text-[9px] px-1.5 py-0.5 tracking-widest">CAPA</span>
-              )}
-            </div>
-          ))}
+            ))}
 
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="aspect-[4/3] border-2 border-dashed border-[var(--color-border)] hover:border-[var(--color-gold)] flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-[var(--color-gold)] transition-colors disabled:opacity-50"
-          >
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            <span className="text-xs">{uploading ? 'Enviando...' : 'Adicionar fotos'}</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="aspect-[4/3] border-2 border-dashed border-[var(--color-border)] hover:border-[var(--color-gold)] flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-[var(--color-gold)] transition-colors disabled:opacity-50"
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="text-xs">{uploading ? 'Enviando...' : 'Adicionar fotos'}</span>
+            </button>
+          </div>
         </div>
         <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFotos} />
       </div>
