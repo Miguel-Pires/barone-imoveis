@@ -16,15 +16,6 @@ const DEFAULT: Partial<Imovel> = {
   tipo: 'apartamento',
   status: 'pronto',
   statusAnuncio: 'ativo',
-  preco: 0,
-  precoCondominio: 0,
-  precoIPTU: 0,
-  areaTotal: 0,
-  areaUtil: 0,
-  quartos: 1,
-  banheiros: 1,
-  vagas: 1,
-  suites: 0,
   andarUnidade: undefined,
   totalAndares: undefined,
   diferenciais: [],
@@ -392,7 +383,7 @@ export default function ImovelForm({ imovel }: Props) {
           </div>
           <div>
             <label className={labelCls}>Vagas *</label>
-            <input type="number" className={inputCls} value={form.vagas ?? ''} onChange={e => set('vagas', Number(e.target.value))} required min={0} max={20} />
+            <input type="number" className={inputCls} value={form.vagas || ''} onChange={e => set('vagas', Number(e.target.value))} required min={0} max={20} />
           </div>
           <div>
             <label className={labelCls}>Suítes</label>
