@@ -34,9 +34,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const imovel = await getImovelBySlug(slug)
   if (!imovel) return {}
+
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.imoveisbarone.com'
+  const url = `${base}/imoveis/${imovel.slug}`
+  const description = imovel.descricao.slice(0, 160)
+  const capa = imovel.imagens.find(i => i.destaque)?.url ?? imovel.imagens[0]?.url
+
   return {
     title: `${imovel.titulo} — Barone Imóveis`,
-    description: imovel.descricao.slice(0, 160),
+    description,
+    openGraph: {
+      title: imovel.titulo,
+      description,
+      url,
+      siteName: 'Barone Imóveis',
+      type: 'website',
+      locale: 'pt_BR',
+      ...(capa && { images: [{ url: capa, width: 1200, height: 630, alt: imovel.titulo }] }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: imovel.titulo,
+      description,
+      ...(capa && { images: [capa] }),
+    },
   }
 }
 
