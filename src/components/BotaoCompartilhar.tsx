@@ -34,12 +34,14 @@ export default function BotaoCompartilhar({ titulo, bairro, preco, area, quartos
     `💰 ${preco}\n` +
     `🏠 ${area}m² · ${quartos} dorm${quartos !== 1 ? 's' : ''} · ${banheiros} banh${banheiros !== 1 ? 's' : ''}\n\n` +
     `Veja todos os detalhes:\n${url}\n\n` +
-    `_Barone Imóveis — Alto padrão no centro de SP_\n${SITE}`
+    `_Barone Imóveis — Alto padrão no centro de SP_`
+
+  const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
 
   async function handleClick() {
-    if (typeof navigator !== 'undefined' && navigator.share) {
+    // Só usa native share no mobile — no desktop o share não envia o texto corretamente
+    if (isMobile && typeof navigator !== 'undefined' && navigator.share) {
       try {
-        // url = homepage para não duplicar o link do imóvel que já está no texto
         await navigator.share({ title: 'Barone Imóveis', text: mensagem, url: SITE })
         return
       } catch {}
