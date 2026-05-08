@@ -89,8 +89,8 @@ export default async function ImovelPage({ params }: Props) {
               )}
 
               {/* Ficha técnica */}
-              <div className="flex flex-wrap sm:flex-nowrap gap-px bg-[var(--color-border)] border border-[var(--color-border)] mb-10">
-                {[
+              {(() => {
+                const specs = [
                   { label: 'Área total', value: `${imovel.areaTotal}m²` },
                   { label: imovel.quartos === 1 ? 'Dormitório' : 'Dormitórios', value: String(imovel.quartos) },
                   { label: imovel.banheiros === 1 ? 'Banheiro' : 'Banheiros', value: String(imovel.banheiros) },
@@ -99,15 +99,26 @@ export default async function ImovelPage({ params }: Props) {
                   ...(imovel.andarUnidade ? [{ label: 'Andar', value: `${imovel.andarUnidade}º` }] : []),
                   ...(imovel.totalAndares ? [{ label: 'Total andares', value: String(imovel.totalAndares) }] : []),
                   ...(imovel.areaUtil ? [{ label: 'Área útil', value: `${imovel.areaUtil}m²` }] : []),
-                ].map((item) => (
-                  <div key={item.label} className="bg-white px-5 py-4 w-1/2 sm:flex-1 sm:w-auto min-w-0">
-                    <p className="text-[10px] tracking-widest uppercase text-gray-400 mb-1">{item.label}</p>
-                    <p className="text-xl font-light text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-serif)' }}>
-                      {item.value}
-                    </p>
+                ]
+                const n = specs.length
+                const smCols =
+                  n <= 4 ? 'sm:grid-cols-4' :
+                  n === 5 ? 'sm:grid-cols-5' :
+                  n === 6 ? 'sm:grid-cols-3' :
+                  n === 7 ? 'sm:grid-cols-4' : 'sm:grid-cols-4'
+                return (
+                  <div className={`grid grid-cols-2 ${smCols} gap-px bg-[var(--color-border)] border border-[var(--color-border)] mb-10`}>
+                    {specs.map(item => (
+                      <div key={item.label} className="bg-white px-5 py-4">
+                        <p className="text-[10px] tracking-widest uppercase text-gray-400 mb-1">{item.label}</p>
+                        <p className="text-xl font-light text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-serif)' }}>
+                          {item.value}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )
+              })()}
 
               {/* Descrição */}
               <div className="mb-12">

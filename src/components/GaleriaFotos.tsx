@@ -193,15 +193,15 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
 
           {/* Imagem */}
           <div
-            className="flex items-center justify-center w-full h-full px-14 py-16"
+            className="flex items-center justify-center w-full h-full px-2 md:px-14 py-14"
             onClick={e => e.stopPropagation()}
           >
             <img
               key={sorted[ativa].id}
               src={sorted[ativa].url}
               alt={sorted[ativa].alt}
-              className="object-contain"
-              style={{ maxHeight: 'calc(100vh - 8rem)', maxWidth: 'calc(100vw - 7rem)' }}
+              className="object-contain w-full h-full"
+              style={{ maxHeight: 'calc(100vh - 7rem)', maxWidth: '100%' }}
               draggable={false}
             />
           </div>
@@ -250,8 +250,8 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
             </div>
           )}
 
-          <p className="absolute bottom-14 md:bottom-4 left-1/2 -translate-x-1/2 text-white/30 text-xs tracking-wide whitespace-nowrap pointer-events-none">
-            {sorted[ativa].alt} · {ativa + 1}/{sorted.length}
+          <p className="absolute bottom-14 md:bottom-4 right-4 text-white/30 text-xs tracking-widest pointer-events-none">
+            {ativa + 1} / {sorted.length}
           </p>
         </div>
       )}
