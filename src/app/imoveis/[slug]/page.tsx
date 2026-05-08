@@ -6,6 +6,7 @@ import WhatsAppFloat from '@/components/WhatsAppFloat'
 import GaleriaFotos from '@/components/GaleriaFotos'
 import PlantasBaixas from '@/components/PlantasBaixas'
 import ImovelCard from '@/components/ImovelCard'
+import BotaoCompartilhar from '@/components/BotaoCompartilhar'
 import type { Metadata } from 'next'
 
 const TIPO_LABEL: Record<string, string> = {
@@ -276,6 +277,15 @@ export default async function ImovelPage({ params }: Props) {
                       </svg>
                       Tenho Interesse
                     </a>
+                    <BotaoCompartilhar
+                      titulo={imovel.titulo}
+                      bairro={imovel.endereco.bairro}
+                      preco={formatPreco(imovel.preco)}
+                      area={imovel.areaTotal}
+                      quartos={imovel.quartos}
+                      banheiros={imovel.banheiros}
+                      url={imovelUrl}
+                    />
                   </div>
                 </div>
 
