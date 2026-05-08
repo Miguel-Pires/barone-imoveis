@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react'
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.imoveisbarone.com'
+
 interface Props {
   titulo: string
   bairro: string
@@ -32,12 +34,13 @@ export default function BotaoCompartilhar({ titulo, bairro, preco, area, quartos
     `💰 ${preco}\n` +
     `🏠 ${area}m² · ${quartos} dorm${quartos !== 1 ? 's' : ''} · ${banheiros} banh${banheiros !== 1 ? 's' : ''}\n\n` +
     `Veja todos os detalhes:\n${url}\n\n` +
-    `_Barone Imóveis — Alto padrão no centro de SP_`
+    `_Barone Imóveis — Alto padrão no centro de SP_\n${SITE}`
 
   async function handleClick() {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({ title: titulo, text: mensagem, url })
+        // url = homepage para não duplicar o link do imóvel que já está no texto
+        await navigator.share({ title: 'Barone Imóveis', text: mensagem, url: SITE })
         return
       } catch {}
     }
@@ -45,7 +48,18 @@ export default function BotaoCompartilhar({ titulo, bairro, preco, area, quartos
   }
 
   async function copiar(texto: string, label: string) {
-    await navigator.clipboard.writeText(texto)
+    try {
+      await navigator.clipboard.writeText(texto)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = texto
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0'
+      document.body.appendChild(ta)
+      ta.focus()
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
     setFeedback(label)
     setTimeout(() => { setFeedback(''); setOpen(false) }, 1600)
   }
