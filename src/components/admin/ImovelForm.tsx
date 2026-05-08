@@ -347,6 +347,15 @@ export default function ImovelForm({ imovel }: Props) {
     if (res.ok) router.push('/admin/imoveis')
   }
 
+  function formatNum(value: number | undefined | null): string {
+    if (!value) return ''
+    return new Intl.NumberFormat('pt-BR').format(value)
+  }
+
+  function parseNum(text: string): number {
+    return Number(text.replace(/\D/g, '')) || 0
+  }
+
   const inputCls = 'w-full border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm focus:border-[var(--color-gold)] outline-none transition-colors'
   const labelCls = 'block text-[10px] tracking-widest uppercase text-gray-400 mb-1.5'
   const sectionCls = 'bg-white border border-[var(--color-border)] p-4 md:p-6 mb-4 md:mb-6'
@@ -431,15 +440,37 @@ export default function ImovelForm({ imovel }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className={labelCls}>Preço (R$) *</label>
-            <input type="number" className={inputCls} value={form.preco || ''} onChange={e => set('preco', Number(e.target.value))} required min={0} />
+            <input
+              type="text"
+              inputMode="numeric"
+              className={inputCls}
+              value={formatNum(form.preco)}
+              onChange={e => set('preco', parseNum(e.target.value))}
+              placeholder="0"
+              required
+            />
           </div>
           <div>
             <label className={labelCls}>Condomínio (R$/mês)</label>
-            <input type="number" className={inputCls} value={form.precoCondominio ?? ''} onChange={e => set('precoCondominio', Number(e.target.value))} min={0} />
+            <input
+              type="text"
+              inputMode="numeric"
+              className={inputCls}
+              value={formatNum(form.precoCondominio)}
+              onChange={e => { const v = parseNum(e.target.value); set('precoCondominio', v || undefined) }}
+              placeholder="0"
+            />
           </div>
           <div>
             <label className={labelCls}>IPTU (R$/ano)</label>
-            <input type="number" className={inputCls} value={form.precoIPTU ?? ''} onChange={e => set('precoIPTU', Number(e.target.value))} min={0} />
+            <input
+              type="text"
+              inputMode="numeric"
+              className={inputCls}
+              value={formatNum(form.precoIPTU)}
+              onChange={e => { const v = parseNum(e.target.value); set('precoIPTU', v || undefined) }}
+              placeholder="0"
+            />
           </div>
         </div>
       </div>
