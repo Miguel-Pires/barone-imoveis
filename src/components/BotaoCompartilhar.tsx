@@ -28,11 +28,11 @@ export default function BotaoCompartilhar({ titulo, bairro, preco, area, quartos
   }, [])
 
   const mensagem =
-    `Olá! Vi esse imóvel pela Barone Imóveis e pensei em você 🏠\n\n` +
+    `Olá! Vi esse imóvel pela Barone Imóveis e pensei em você.\n\n` +
     `*${titulo}*\n` +
-    `📍 ${bairro}, São Paulo\n` +
-    `💰 ${preco}\n` +
-    `🏠 ${area}m² · ${quartos} dorm${quartos !== 1 ? 's' : ''} · ${banheiros} banh${banheiros !== 1 ? 's' : ''}\n\n` +
+    `${bairro}, São Paulo\n` +
+    `Valor: ${preco}\n` +
+    `${area}m² · ${quartos} dorm${quartos !== 1 ? 's' : ''} · ${banheiros} banh${banheiros !== 1 ? 's' : ''}\n\n` +
     `Veja todos os detalhes:\n${url}\n\n` +
     `_Barone Imóveis — Alto padrão no centro de SP_`
 
