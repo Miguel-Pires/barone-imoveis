@@ -42,6 +42,7 @@ function rowToImovel(row: Record<string, unknown>): Imovel {
     nomeEmpreendimento: row.nome_empreendimento as string | undefined,
     construtora: row.construtora as string | undefined,
     incorporadora: row.incorporadora as string | undefined,
+    dataEntrega: row.data_entrega as string | undefined,
     destaque: Boolean(row.destaque),
     criadoEm: row.criado_em as string,
     atualizadoEm: row.atualizado_em as string,
@@ -119,6 +120,7 @@ export async function createImovel(input: ImovelInput): Promise<Imovel> {
     nome_empreendimento: input.nomeEmpreendimento ?? null,
     construtora: input.construtora ?? null,
     incorporadora: input.incorporadora ?? null,
+    data_entrega: input.dataEntrega ?? null,
     destaque: input.destaque,
     criado_em: now,
     atualizado_em: now,
@@ -164,6 +166,7 @@ export async function updateImovel(id: string, input: Partial<ImovelInput>): Pro
   if (input.destaque !== undefined) updates.destaque = input.destaque
   if (input.nomeEmpreendimento !== undefined) updates.nome_empreendimento = input.nomeEmpreendimento
   if (input.construtora !== undefined) updates.construtora = input.construtora
+  if (input.dataEntrega !== undefined) updates.data_entrega = input.dataEntrega || null
 
   const { data, error } = await supabaseAdmin
     .from('imoveis')

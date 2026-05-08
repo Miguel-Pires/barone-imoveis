@@ -71,6 +71,7 @@ export interface Imovel {
   nomeEmpreendimento?: string
   construtora?: string
   incorporadora?: string
+  dataEntrega?: string
   destaque: boolean
   criadoEm: string
   atualizadoEm: string

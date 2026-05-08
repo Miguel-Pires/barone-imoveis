@@ -121,6 +121,7 @@ export default async function ImovelPage({ params }: Props) {
                   ...(imovel.andarUnidade ? [{ label: 'Andar', value: `${imovel.andarUnidade}º` }] : []),
                   ...(imovel.totalAndares ? [{ label: 'Total andares', value: String(imovel.totalAndares) }] : []),
                   ...(imovel.areaUtil ? [{ label: 'Área útil', value: `${imovel.areaUtil}m²` }] : []),
+                  ...(imovel.dataEntrega ? [{ label: 'Entrega prevista', value: imovel.dataEntrega }] : []),
                 ]
                 const n = specs.length
                 const smCols =

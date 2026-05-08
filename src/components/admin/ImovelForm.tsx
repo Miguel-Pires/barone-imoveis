@@ -42,6 +42,8 @@ export default function ImovelForm({ imovel }: Props) {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [dragging, setDragging] = useState(false)
+  const [draggingPlanta, setDraggingPlanta] = useState(false)
+  const [draggingVideo, setDraggingVideo] = useState(false)
   const [videoUrl, setVideoUrl] = useState('')
   const [videoError, setVideoError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -129,6 +131,76 @@ export default function ImovelForm({ imovel }: Props) {
         }
         setForm(prev => ({ ...prev, imagens: [...(prev.imagens ?? []), ...novas] }))
         setUploading(false)
+      }
+    }
+  }
+
+  async function handleDropPlanta(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDraggingPlanta(false)
+
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+    if (files.length > 0) {
+      setUploading(true)
+      for (const file of files) {
+        const url = await uploadFoto(file)
+        if (url) {
+          const nova: PlantaBaixa = { id: uuidv4(), titulo: file.name.replace(/\.[^.]+$/, ''), tipologia: 'Apartamento', areaTotal: 0, imagemUrl: url, tipo: 'unidade' }
+          setForm(prev => ({ ...prev, plantasBaixas: [...(prev.plantasBaixas ?? []), nova] }))
+        }
+      }
+      setUploading(false)
+      return
+    }
+
+    const rawUrls = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain')
+    if (rawUrls) {
+      const urls = rawUrls.split(/\r?\n/).map(u => u.trim()).filter(u => u && !u.startsWith('#') && /^https?:\/\//i.test(u))
+      if (urls.length > 0) {
+        setUploading(true)
+        for (const srcUrl of urls) {
+          const res = await fetch('/api/upload-from-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: srcUrl }) })
+          if (res.ok) {
+            const { url } = await res.json()
+            const nova: PlantaBaixa = { id: uuidv4(), titulo: '', tipologia: 'Apartamento', areaTotal: 0, imagemUrl: url, tipo: 'unidade' }
+            setForm(prev => ({ ...prev, plantasBaixas: [...(prev.plantasBaixas ?? []), nova] }))
+          }
+        }
+        setUploading(false)
+      }
+    }
+  }
+
+  async function handleDropVideo(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDraggingVideo(false)
+
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('video/'))
+    if (files.length > 0) {
+      setUploading(true)
+      setVideoError('')
+      for (const file of files) {
+        const url = await uploadFoto(file)
+        if (url) {
+          const novo: Video = { id: uuidv4(), tipo: 'upload', url }
+          setForm(prev => ({ ...prev, videos: [...(prev.videos ?? []), novo] }))
+        }
+      }
+      setUploading(false)
+      return
+    }
+
+    const rawUrls = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain')
+    if (rawUrls) {
+      const urls = rawUrls.split(/\r?\n/).map(u => u.trim()).filter(u => u && !u.startsWith('#') && /^https?:\/\//i.test(u))
+      for (const url of urls) {
+        const parsed = parseVideoUrl(url)
+        if (parsed) {
+          const novo: Video = { id: uuidv4(), tipo: parsed.tipo, url, embedId: parsed.embedId }
+          setForm(prev => ({ ...prev, videos: [...(prev.videos ?? []), novo] }))
+        }
       }
     }
   }
@@ -320,6 +392,17 @@ export default function ImovelForm({ imovel }: Props) {
               <option value="vendido">Vendido</option>
             </select>
           </div>
+          {(form.status === 'lancamento' || form.status === 'em_construcao') && (
+            <div>
+              <label className={labelCls}>Previsão de Entrega</label>
+              <input
+                className={inputCls}
+                value={form.dataEntrega ?? ''}
+                onChange={e => set('dataEntrega', e.target.value || undefined)}
+                placeholder="Ex: Dezembro/2026, 4º Trimestre 2027"
+              />
+            </div>
+          )}
           <div className="flex items-center gap-2 pt-6">
             <input
               type="checkbox"
@@ -500,7 +583,25 @@ export default function ImovelForm({ imovel }: Props) {
       {/* Plantas Baixas */}
       <div className={sectionCls}>
         <h2 className="text-lg font-light mb-2" style={{ fontFamily: 'var(--font-serif)' }}>Plantas Baixas</h2>
-        <p className="text-xs text-gray-400 mb-6">Você pode adicionar múltiplas variações (tipos A, B, C ou por metragem). Edite o título, tipologia e área após o upload.</p>
+        <p className="text-xs text-gray-400 mb-6">Arraste imagens aqui ou clique nos botões abaixo. Plantas adicionadas por arraste entram como "Apartamento" — troque o tipo depois se necessário.</p>
+
+        <div
+          className={`relative rounded-sm transition-colors ${draggingPlanta ? 'bg-[var(--color-gold)]/5 ring-2 ring-[var(--color-gold)]' : ''}`}
+          onDragOver={e => { e.preventDefault(); setDraggingPlanta(true) }}
+          onDragEnter={e => { e.preventDefault(); setDraggingPlanta(true) }}
+          onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDraggingPlanta(false) }}
+          onDrop={handleDropPlanta}
+        >
+          {draggingPlanta && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-gold)]/10 pointer-events-none">
+              <div className="flex flex-col items-center gap-2 text-[var(--color-gold)]">
+                <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <span className="text-sm font-medium tracking-widest uppercase">Solte aqui</span>
+              </div>
+            </div>
+          )}
 
         {/* Lista de plantas com edição inline */}
         {(form.plantasBaixas ?? []).length > 0 && (
@@ -612,12 +713,31 @@ export default function ImovelForm({ imovel }: Props) {
         </div>
         <input ref={plantaUnidadeRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handlePlanta(e, 'unidade')} />
         <input ref={plantaEdificioRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handlePlanta(e, 'edificio')} />
+        </div>
       </div>
 
       {/* Vídeos */}
       <div className={sectionCls}>
         <h2 className="text-lg font-light mb-2" style={{ fontFamily: 'var(--font-serif)' }}>Vídeos</h2>
-        <p className="text-xs text-gray-400 mb-6">Cole um link do YouTube ou Vimeo, ou faça upload de um vídeo (MP4, MOV, WEBM).</p>
+        <p className="text-xs text-gray-400 mb-6">Arraste um vídeo do PC ou um link do YouTube/Vimeo aqui, ou use os campos abaixo.</p>
+
+        <div
+          className={`relative rounded-sm transition-colors ${draggingVideo ? 'bg-[var(--color-gold)]/5 ring-2 ring-[var(--color-gold)]' : ''}`}
+          onDragOver={e => { e.preventDefault(); setDraggingVideo(true) }}
+          onDragEnter={e => { e.preventDefault(); setDraggingVideo(true) }}
+          onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDraggingVideo(false) }}
+          onDrop={handleDropVideo}
+        >
+          {draggingVideo && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-gold)]/10 pointer-events-none">
+              <div className="flex flex-col items-center gap-2 text-[var(--color-gold)]">
+                <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <span className="text-sm font-medium tracking-widest uppercase">Solte aqui</span>
+              </div>
+            </div>
+          )}
 
         {(form.videos ?? []).length > 0 && (
           <div className="space-y-3 mb-6">
@@ -682,6 +802,7 @@ export default function ImovelForm({ imovel }: Props) {
         </button>
         <input ref={videoRef} type="file" accept="video/mp4,video/quicktime,video/webm" className="hidden" onChange={handleVideoUpload} />
         {videoError && <p className="text-xs text-red-500 mt-2">{videoError}</p>}
+        </div>
       </div>
 
       {/* Endereço */}
