@@ -190,20 +190,22 @@ export default async function ImovelPage({ params }: Props) {
                   ...(imovel.dataEntrega ? [{ label: 'Entrega prevista', value: imovel.dataEntrega }] : []),
                 ]
                 const n = specs.length
-                const smCols =
-                  n <= 4 ? 'sm:grid-cols-4' :
-                  n === 5 ? 'sm:grid-cols-5' :
-                  n === 6 ? 'sm:grid-cols-3' :
-                  n === 7 ? 'sm:grid-cols-4' : 'sm:grid-cols-4'
+                const colCount = n <= 4 ? 4 : n <= 6 ? 3 : 4
+                const smCols = colCount === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-4'
+                const lcm = colCount % 2 === 0 ? colCount : colCount * 2
+                const fillerCount = (lcm - (n % lcm)) % lcm
                 return (
                   <div className={`grid grid-cols-2 ${smCols} gap-px bg-[var(--color-border)] border border-[var(--color-border)] mb-10`}>
                     {specs.map(item => (
                       <div key={item.label} className="bg-white px-5 py-4">
                         <p className="text-[10px] tracking-widest uppercase text-gray-400 mb-1">{item.label}</p>
-                        <p className="text-xl font-light text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-serif)' }}>
+                        <p className="text-xl font-light text-[var(--color-dark)] lining-nums tabular-nums" style={{ fontFamily: 'var(--font-serif)' }}>
                           {item.value}
                         </p>
                       </div>
+                    ))}
+                    {Array.from({ length: fillerCount }).map((_, i) => (
+                      <div key={`filler-${i}`} className="bg-white" />
                     ))}
                   </div>
                 )

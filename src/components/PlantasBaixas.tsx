@@ -103,7 +103,7 @@ export default function PlantasBaixas({ plantas }: Props) {
                 )}
               </div>
               {planta.preco != null && planta.preco > 0 && (
-                <p className="text-sm font-light text-[var(--color-dark)] mt-1.5" style={{ fontFamily: 'var(--font-serif)' }}>
+                <p className="text-sm font-light text-[var(--color-dark)] mt-1.5 lining-nums tabular-nums" style={{ fontFamily: 'var(--font-serif)' }}>
                   {formatPreco(planta.preco)}
                 </p>
               )}
@@ -140,7 +140,7 @@ export default function PlantasBaixas({ plantas }: Props) {
                     </span>
                   )}
                   {plantaSelecionada.preco != null && plantaSelecionada.preco > 0 && (
-                    <span className="text-sm font-light text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-serif)' }}>
+                    <span className="text-sm font-light text-[var(--color-dark)] lining-nums tabular-nums" style={{ fontFamily: 'var(--font-serif)' }}>
                       {formatPreco(plantaSelecionada.preco)}
                     </span>
                   )}
