@@ -321,10 +321,13 @@ export default async function ImovelPage({ params }: Props) {
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
                 <div className="border border-[var(--color-border)] p-6">
-                  <p className="text-[10px] tracking-widest uppercase text-gray-400 mb-1">A partir de</p>
-                  <p className="text-3xl font-light text-[var(--color-dark)] mb-1" style={{ fontFamily: 'var(--font-serif)' }}>
-                    {formatPreco(imovel.preco)}
-                  </p>
+                  <p className="text-[10px] tracking-widest uppercase text-gray-400 mb-2">A partir de</p>
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-xs tracking-widest text-[var(--color-gold)] uppercase font-medium">R$</span>
+                    <span className="text-4xl font-light text-[var(--color-dark)] leading-none" style={{ fontFamily: 'var(--font-serif)' }}>
+                      {new Intl.NumberFormat('pt-BR').format(imovel.preco)}
+                    </span>
+                  </div>
                   {imovel.precoCondominio && (
                     <p className="text-xs text-gray-400 mb-4">
                       + Condomínio: {formatPreco(imovel.precoCondominio)}/mês
