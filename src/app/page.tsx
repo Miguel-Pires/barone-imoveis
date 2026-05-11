@@ -8,14 +8,44 @@ const WHATSAPP_CONTATO = encodeURIComponent('Olá, gostaria de agendar uma visit
 
 export const dynamic = 'force-dynamic'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.imoveisbarone.com'
+
 export default async function HomePage() {
   const [imoveis, corretor] = await Promise.all([getImoveis(true), getCorretor()])
   const WHATSAPP = corretor.whatsapp
   const destaques = imoveis.filter(i => i.destaque)
   const outros = imoveis.filter(i => !i.destaque)
 
+  const localBusinessSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateAgent',
+    name: 'Barone Imóveis',
+    url: BASE,
+    telephone: `+${corretor.whatsapp}`,
+    ...(corretor.email && { email: corretor.email }),
+    ...(corretor.creci && { taxID: `CRECI ${corretor.creci}` }),
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'São Paulo',
+      addressRegion: 'SP',
+      addressCountry: 'BR',
+    },
+    areaServed: [
+      { '@type': 'Place', name: 'Higienópolis, São Paulo' },
+      { '@type': 'Place', name: 'República, São Paulo' },
+      { '@type': 'Place', name: 'Santa Cecília, São Paulo' },
+      { '@type': 'Place', name: 'Vila Buarque, São Paulo' },
+    ],
+    priceRange: 'Alto Padrão',
+    description: 'Corretor especializado em imóveis de alto padrão no centro de São Paulo.',
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
       <Header />
       <main>
         {/* Hero */}

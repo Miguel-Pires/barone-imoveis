@@ -6,8 +6,15 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.imoveisbarone.com'
 export const metadata: Metadata = {
   title: 'Barone Imóveis — Corretor de Imóveis no Centro de São Paulo',
   description: 'Imóveis de alto padrão no centro de São Paulo. Studios, apartamentos e coberturas nos melhores bairros: República, Higienópolis, Santa Cecília e mais.',
-  keywords: 'imóveis centro são paulo, apartamento centro sp, barone imóveis, corretor centro sp',
+  keywords: 'imóveis centro são paulo, apartamento centro sp, barone imóveis, corretor centro sp, imóveis higienópolis, imóveis república sp, imóveis santa cecília, imóveis vila buarque',
   metadataBase: new URL(BASE),
+  alternates: {
+    canonical: BASE,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: 'Barone Imóveis',
     description: 'Imóveis de alto padrão no centro de São Paulo.',

@@ -31,6 +31,18 @@ export async function generateStaticParams() {
   }
 }
 
+function buildDescription(imovel: Awaited<ReturnType<typeof getImovelBySlug>>): string {
+  if (!imovel) return ''
+  const tipo = TIPO_LABEL[imovel.tipo] ?? imovel.tipo
+  const bairro = imovel.endereco.bairro
+  const preco = new Intl.NumberFormat('pt-BR', {
+    style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0,
+  }).format(imovel.preco)
+  const dorms = `${imovel.quartos} ${imovel.quartos === 1 ? 'dormitório' : 'dormitórios'}`
+  const vagas = `${imovel.vagas} ${imovel.vagas === 1 ? 'vaga' : 'vagas'}`
+  return `${tipo} à venda em ${bairro}, São Paulo. ${imovel.areaTotal}m², ${dorms}, ${vagas}. A partir de ${preco}. Barone Imóveis.`
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const imovel = await getImovelBySlug(slug)
@@ -38,12 +50,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.imoveisbarone.com'
   const url = `${base}/imoveis/${imovel.slug}`
-  const description = imovel.descricao.slice(0, 160)
-  const capa = imovel.imagens.find(i => i.destaque)?.url ?? imovel.imagens[0]?.url
+  const tipo = TIPO_LABEL[imovel.tipo] ?? imovel.tipo
+  const bairro = imovel.endereco.bairro
+  const description = buildDescription(imovel)
+  const title = `${tipo} em ${bairro}, SP · ${imovel.areaTotal}m² · ${imovel.quartos} ${imovel.quartos === 1 ? 'dorm' : 'dorms'} — Barone Imóveis`
+  const keywords = [
+    `${tipo.toLowerCase()} ${bairro.toLowerCase()} são paulo`,
+    `${tipo.toLowerCase()} à venda ${bairro.toLowerCase()}`,
+    `imóvel alto padrão ${bairro.toLowerCase()} sp`,
+    `comprar ${tipo.toLowerCase()} centro sp`,
+    `barone imóveis ${bairro.toLowerCase()}`,
+  ].join(', ')
 
   return {
-    title: `${imovel.titulo} — Barone Imóveis`,
+    title,
     description,
+    keywords,
+    alternates: { canonical: url },
     openGraph: {
       title: imovel.titulo,
       description,
@@ -51,13 +74,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: 'Barone Imóveis',
       type: 'website',
       locale: 'pt_BR',
-      ...(capa && { images: [{ url: capa, width: 1200, height: 630, alt: imovel.titulo }] }),
     },
     twitter: {
       card: 'summary_large_image',
       title: imovel.titulo,
       description,
-      ...(capa && { images: [capa] }),
     },
   }
 }
@@ -69,15 +90,60 @@ export default async function ImovelPage({ params }: Props) {
   const relacionados = await getImoveisRelacionados(imovel.id, imovel.tipo)
 
   const WHATSAPP = corretor.whatsapp
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
-  const imovelUrl = `${siteUrl}/imoveis/${imovel.slug}`
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.imoveisbarone.com'
+  const imovelUrl = `${base}/imoveis/${imovel.slug}`
 
   const whatsappMsg = encodeURIComponent(
     `Olá! Tenho interesse no imóvel *${imovel.titulo}* em ${imovel.endereco.bairro}.\n\nLink: ${imovelUrl}\n\nPoderia me dar mais informações?`
   )
+  const tipo = TIPO_LABEL[imovel.tipo] ?? imovel.tipo
+  const capaUrl = imovel.imagens.find(i => i.destaque)?.url ?? imovel.imagens[0]?.url
+
+  const realEstateSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: imovel.titulo,
+    description: imovel.descricao,
+    url: imovelUrl,
+    ...(capaUrl && { image: [capaUrl] }),
+    offers: {
+      '@type': 'Offer',
+      price: imovel.preco,
+      priceCurrency: 'BRL',
+      availability: 'https://schema.org/InStock',
+    },
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: `${imovel.endereco.rua}, ${imovel.endereco.numero}`,
+      addressLocality: imovel.endereco.cidade,
+      addressRegion: imovel.endereco.estado,
+      postalCode: imovel.endereco.cep ?? '',
+      addressCountry: 'BR',
+    },
+    floorSize: {
+      '@type': 'QuantitativeValue',
+      value: imovel.areaTotal,
+      unitCode: 'MTK',
+    },
+    numberOfRooms: imovel.quartos,
+    numberOfBathroomsTotal: imovel.banheiros,
+    additionalType: tipo,
+  }
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: base },
+      { '@type': 'ListItem', position: 2, name: 'Imóveis', item: `${base}/#imoveis` },
+      { '@type': 'ListItem', position: 3, name: imovel.titulo, item: imovelUrl },
+    ],
+  }
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(realEstateSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <Header />
       <main className="pt-16">
         <GaleriaFotos imagens={imovel.imagens} titulo={imovel.titulo} />
