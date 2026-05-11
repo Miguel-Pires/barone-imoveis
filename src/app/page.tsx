@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { getImoveis, getCorretor } from '@/lib/db'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -156,9 +157,11 @@ export default async function HomePage() {
               </h2>
               {corretor.fotoPerfil && (
                 <div className="flex items-center gap-4 mb-8">
-                  <img
+                  <Image
                     src={corretor.fotoPerfil}
                     alt={corretor.nome}
+                    width={64}
+                    height={64}
                     className="w-16 h-16 rounded-full object-cover border-2 border-[var(--color-gold)]"
                   />
                   <div>
@@ -185,11 +188,15 @@ export default async function HomePage() {
             </div>
             <div className="relative">
               {corretor.fotoCapa ? (
-                <img
-                  src={corretor.fotoCapa}
-                  alt={`${corretor.nome} — foto de capa`}
-                  className="w-full h-80 object-cover border border-gray-800"
-                />
+                <div className="relative w-full h-80">
+                  <Image
+                    src={corretor.fotoCapa}
+                    alt={`${corretor.nome} — foto de capa`}
+                    fill
+                    sizes="(max-width: 1280px) 100vw, 640px"
+                    className="object-cover border border-gray-800"
+                  />
+                </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
                   {['República', 'Higienópolis', 'Santa Cecília', 'Vila Buarque'].map((bairro) => (

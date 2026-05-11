@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Image from 'next/image'
 import { getImovelBySlug, getImoveis, formatPreco, getCorretor, getImoveisRelacionados } from '@/lib/db'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -365,9 +366,11 @@ export default async function ImovelPage({ params }: Props) {
                   <p className="text-[10px] tracking-widest uppercase text-gray-400 mb-3">Corretor Responsável</p>
                   <div className="flex items-center gap-3 mb-3">
                     {corretor.fotoPerfil ? (
-                      <img
+                      <Image
                         src={corretor.fotoPerfil}
                         alt={corretor.nome}
+                        width={48}
+                        height={48}
                         className="w-12 h-12 rounded-full object-cover border border-[var(--color-border)] shrink-0"
                       />
                     ) : (

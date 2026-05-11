@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Image from 'next/image'
 import { Imagem } from '@/types/imovel'
 
 interface Props {
@@ -79,13 +80,16 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
           onTouchStart={onTouchStart}
           onTouchEnd={e => onTouchEnd(e, next, prev)}
         >
-          <img
+          <Image
             key={sorted[ativa].id}
             src={sorted[ativa].url}
             alt={sorted[ativa].alt}
-            className="absolute inset-0 w-full h-full object-contain object-center transition-opacity duration-200"
+            fill
+            sizes="100vw"
+            className="object-contain object-center transition-opacity duration-200"
             style={{ opacity: animDir ? 0 : 1 }}
             draggable={false}
+            priority={ativa === 0}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
@@ -152,7 +156,7 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
                 style={{ width: 64, height: 44 }}
                 title={img.alt}
               >
-                <img src={img.url} alt={img.alt} className="w-full h-full object-cover" draggable={false} />
+                <Image src={img.url} alt={img.alt} width={64} height={44} className="w-full h-full object-cover" draggable={false} />
               </button>
             ))}
           </div>
@@ -231,7 +235,7 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
                   }`}
                   style={{ width: 52, height: 36 }}
                 >
-                  <img src={img.url} alt="" className="w-full h-full object-cover" draggable={false} />
+                  <Image src={img.url} alt="" width={52} height={36} className="w-full h-full object-cover" draggable={false} />
                 </button>
               ))}
             </div>
