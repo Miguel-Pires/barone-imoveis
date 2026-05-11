@@ -95,7 +95,7 @@ export default function ImovelCard({ imovel }: Props) {
             <div>
               <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">A partir de</p>
               <p
-                className="text-xl font-light text-[var(--color-dark)]"
+                className="text-xl font-light text-[var(--color-dark)] lining-nums tabular-nums"
                 style={{ fontFamily: 'var(--font-serif)' }}
               >
                 {formatPreco(imovel.preco)}
