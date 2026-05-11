@@ -8,7 +8,7 @@ interface Params {
 
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params
-  const imovel = getImovelById(id)
+  const imovel = await getImovelById(id)
   if (!imovel) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
   return NextResponse.json(imovel)
 }
@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { id } = await params
   try {
     const body = await req.json()
-    const updated = updateImovel(id, body)
+    const updated = await updateImovel(id, body)
     if (!updated) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
     return NextResponse.json(updated)
   } catch {
@@ -33,7 +33,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
   const { id } = await params
-  const ok = deleteImovel(id)
+  const ok = await deleteImovel(id)
   if (!ok) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
   return NextResponse.json({ success: true })
 }

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { getImoveis } from '@/lib/db'
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://barone-imoveis.vercel.app'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.imoveisbarone.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const imoveis = await getImoveis(true)
