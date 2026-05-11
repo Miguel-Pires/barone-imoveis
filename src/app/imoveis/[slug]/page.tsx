@@ -16,7 +16,7 @@ const STATUS_LABEL: Record<string, string> = {
   lancamento: 'Lançamento', em_construcao: 'Em Construção', pronto: 'Pronto para Morar', usado: 'Revenda',
 }
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -24,7 +24,7 @@ interface Props {
 
 export async function generateStaticParams() {
   try {
-    const imoveis = await getImoveis(false)
+    const imoveis = await getImoveis(true)
     return imoveis.map(i => ({ slug: i.slug }))
   } catch {
     return []
