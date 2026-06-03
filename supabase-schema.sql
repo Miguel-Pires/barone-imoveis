@@ -26,9 +26,11 @@ create table if not exists imoveis (
   imagens jsonb default '[]',
   plantas_baixas jsonb default '[]',
   endereco jsonb not null,
+  videos jsonb default '[]',
   nome_empreendimento text,
   construtora text,
   incorporadora text,
+  data_entrega text,
   destaque boolean default false,
   criado_em timestamptz default now(),
   atualizado_em timestamptz default now()
