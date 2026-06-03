@@ -5,7 +5,7 @@ import { checkAdminAuth } from '@/lib/auth'
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const soAtivos = searchParams.get('todos') !== '1'
-  return NextResponse.json(getImoveis(soAtivos))
+  return NextResponse.json(await getImoveis(soAtivos))
 }
 
 export async function POST(req: NextRequest) {
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
   try {
     const body = await req.json()
-    const imovel = createImovel(body)
+    const imovel = await createImovel(body)
     return NextResponse.json(imovel, { status: 201 })
   } catch {
     return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
