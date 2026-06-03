@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const imovel = await createImovel(body)
     return NextResponse.json(imovel, { status: 201 })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
+    const msg = err instanceof Error ? err.message : JSON.stringify(err)
     console.error('[POST /api/imoveis]', msg)
     return NextResponse.json({ error: 'Dados inválidos', detail: msg }, { status: 400 })
   }
