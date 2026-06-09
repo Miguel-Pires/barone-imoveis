@@ -496,8 +496,8 @@ export default function ImovelForm({ imovel }: Props) {
             <input type="number" className={inputCls} value={form.banheiros || ''} onChange={e => set('banheiros', Number(e.target.value))} required min={1} max={20} />
           </div>
           <div>
-            <label className={labelCls}>Vagas *</label>
-            <input type="number" className={inputCls} value={form.vagas || ''} onChange={e => set('vagas', Number(e.target.value))} required min={0} max={20} />
+            <label className={labelCls}>Vagas</label>
+            <input type="number" className={inputCls} value={form.vagas ?? ''} onChange={e => set('vagas', Number(e.target.value))} min={0} max={20} />
           </div>
           <div>
             <label className={labelCls}>Suítes</label>
