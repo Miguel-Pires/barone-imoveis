@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Imovel } from '@/types/imovel'
-import { formatPreco } from '@/lib/db'
+import { formatPreco } from '@/lib/format'
 
 const TIPO_LABEL: Record<string, string> = {
   apartamento: 'Apartamento',

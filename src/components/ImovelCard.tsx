@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Imovel } from '@/types/imovel'
-import { formatPreco } from '@/lib/db'
+import { formatPreco } from '@/lib/format'
 
 const STATUS_LABEL: Record<string, string> = {
   lancamento: 'Lançamento',
