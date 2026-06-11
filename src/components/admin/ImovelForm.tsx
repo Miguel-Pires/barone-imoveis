@@ -44,6 +44,8 @@ export default function ImovelForm({ imovel }: Props) {
   const [dragging, setDragging] = useState(false)
   const [draggingPlanta, setDraggingPlanta] = useState(false)
   const [draggingVideo, setDraggingVideo] = useState(false)
+  const [draggedImgId, setDraggedImgId] = useState<string | null>(null)
+  const [dragOverImgId, setDragOverImgId] = useState<string | null>(null)
   const [videoUrl, setVideoUrl] = useState('')
   const [videoError, setVideoError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -95,6 +97,9 @@ export default function ImovelForm({ imovel }: Props) {
     e.preventDefault()
     e.stopPropagation()
     setDragging(false)
+
+    // Reordenação interna — tratada pelo onDrop de cada card
+    if (e.dataTransfer.getData('text/x-image-id')) return
 
     const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
     if (files.length > 0) {
@@ -306,6 +311,18 @@ export default function ImovelForm({ imovel }: Props) {
       ...prev,
       diferenciais: (prev.diferenciais ?? []).filter(d => d !== item),
     }))
+  }
+
+  function reordenarImagens(fromId: string, toId: string) {
+    setForm(prev => {
+      const imgs = [...(prev.imagens ?? [])]
+      const fromIdx = imgs.findIndex(i => i.id === fromId)
+      const toIdx = imgs.findIndex(i => i.id === toId)
+      if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return prev
+      const [moved] = imgs.splice(fromIdx, 1)
+      imgs.splice(toIdx, 0, moved)
+      return { ...prev, imagens: imgs.map((img, idx) => ({ ...img, ordem: idx })) }
+    })
   }
 
   function setDestaque(id: string) {
@@ -546,12 +563,12 @@ export default function ImovelForm({ imovel }: Props) {
       {/* Fotos */}
       <div className={sectionCls}>
         <h2 className="text-lg font-light mb-2" style={{ fontFamily: 'var(--font-serif)' }}>Fotos</h2>
-        <p className="text-xs text-gray-400 mb-4">Arraste fotos aqui, cole do navegador ou clique em "+" para selecionar. Toque na estrela (★) para definir a capa.</p>
+        <p className="text-xs text-gray-400 mb-4">Arraste as fotos para <strong>reordenar</strong>. Solte arquivos do PC ou imagens do navegador para adicionar. Toque na estrela (★) para definir a capa.</p>
 
         <div
           className={`relative rounded-sm transition-colors ${dragging ? 'bg-[var(--color-gold)]/5 ring-2 ring-[var(--color-gold)]' : ''}`}
-          onDragOver={e => { e.preventDefault(); setDragging(true) }}
-          onDragEnter={e => { e.preventDefault(); setDragging(true) }}
+          onDragOver={e => { e.preventDefault(); if (!draggedImgId) setDragging(true) }}
+          onDragEnter={e => { e.preventDefault(); if (!draggedImgId) setDragging(true) }}
           onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }}
           onDrop={handleDrop}
         >
@@ -567,9 +584,38 @@ export default function ImovelForm({ imovel }: Props) {
           )}
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            {(form.imagens ?? []).map(img => (
-              <div key={img.id} className="relative group aspect-[4/3] bg-[var(--color-warm-gray)] overflow-hidden border border-[var(--color-border)]">
-                <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+            {(form.imagens ?? []).map((img, idx) => (
+              <div
+                key={img.id}
+                draggable
+                onDragStart={e => {
+                  setDraggedImgId(img.id)
+                  e.dataTransfer.setData('text/x-image-id', img.id)
+                  e.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragOver={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (draggedImgId && draggedImgId !== img.id) setDragOverImgId(img.id)
+                }}
+                onDragLeave={e => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverImgId(null)
+                }}
+                onDrop={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setDragOverImgId(null)
+                  if (draggedImgId && draggedImgId !== img.id) reordenarImagens(draggedImgId, img.id)
+                  setDraggedImgId(null)
+                }}
+                onDragEnd={() => { setDraggedImgId(null); setDragOverImgId(null) }}
+                className={`relative group aspect-[4/3] bg-[var(--color-warm-gray)] overflow-hidden border transition-all select-none cursor-grab active:cursor-grabbing ${
+                  dragOverImgId === img.id
+                    ? 'border-[var(--color-gold)] ring-2 ring-[var(--color-gold)]'
+                    : 'border-[var(--color-border)]'
+                } ${draggedImgId === img.id ? 'opacity-40' : 'opacity-100'}`}
+              >
+                <img src={img.url} alt={img.alt} className="w-full h-full object-cover pointer-events-none" />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
                   <div className="absolute top-1 left-1">
                     <button
@@ -581,6 +627,7 @@ export default function ImovelForm({ imovel }: Props) {
                       ★
                     </button>
                   </div>
+                  <span className="absolute top-1.5 right-7 opacity-0 group-hover:opacity-60 transition-opacity text-white text-base leading-none" title="Arraste para reordenar">⠿</span>
                   <button
                     type="button"
                     onClick={() => removerImagem(img.id)}
@@ -592,6 +639,9 @@ export default function ImovelForm({ imovel }: Props) {
                 {img.destaque && (
                   <span className="absolute bottom-1 left-1 bg-[var(--color-gold)] text-white text-[9px] px-1.5 py-0.5 tracking-widest">CAPA</span>
                 )}
+                <span className="absolute bottom-1 right-1 bg-black/50 text-white text-[9px] px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {idx + 1}
+                </span>
               </div>
             ))}
 
@@ -841,12 +891,12 @@ export default function ImovelForm({ imovel }: Props) {
         <h2 className="text-lg font-light mb-6" style={{ fontFamily: 'var(--font-serif)' }}>Endereço</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
-            <label className={labelCls}>Rua / Avenida *</label>
-            <input className={inputCls} value={form.endereco?.rua ?? ''} onChange={e => set('endereco.rua', e.target.value)} required />
+            <label className={labelCls}>Rua / Avenida</label>
+            <input className={inputCls} value={form.endereco?.rua ?? ''} onChange={e => set('endereco.rua', e.target.value)} />
           </div>
           <div>
-            <label className={labelCls}>Número *</label>
-            <input className={inputCls} value={form.endereco?.numero ?? ''} onChange={e => set('endereco.numero', e.target.value)} required />
+            <label className={labelCls}>Número</label>
+            <input className={inputCls} value={form.endereco?.numero ?? ''} onChange={e => set('endereco.numero', e.target.value)} />
           </div>
           <div>
             <label className={labelCls}>Complemento</label>

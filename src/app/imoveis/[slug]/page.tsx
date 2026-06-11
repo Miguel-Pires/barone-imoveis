@@ -115,7 +115,7 @@ export default async function ImovelPage({ params }: Props) {
     },
     address: {
       '@type': 'PostalAddress',
-      streetAddress: `${imovel.endereco.rua}, ${imovel.endereco.numero}`,
+      streetAddress: [imovel.endereco.rua, imovel.endereco.numero].filter(Boolean).join(', ') || imovel.endereco.bairro,
       addressLocality: imovel.endereco.cidade,
       addressRegion: imovel.endereco.estado,
       postalCode: imovel.endereco.cep ?? '',
@@ -288,35 +288,44 @@ export default async function ImovelPage({ params }: Props) {
                 <h2 className="text-2xl font-light text-[var(--color-dark)] mb-4 gold-line" style={{ fontFamily: 'var(--font-serif)' }}>
                   Localização
                 </h2>
-                <p className="text-gray-600 mt-6 mb-5">
-                  {imovel.endereco.rua}, {imovel.endereco.numero}
-                  {imovel.endereco.complemento && ` — ${imovel.endereco.complemento}`}
-                  {' · '}{imovel.endereco.bairro}, {imovel.endereco.cidade}/{imovel.endereco.estado}
-                  {imovel.endereco.cep && ` · CEP ${imovel.endereco.cep}`}
-                </p>
-                <div className="relative w-full rounded-none overflow-hidden border border-[var(--color-border)]" style={{ height: 320 }}>
-                  <iframe
-                    title="Localização no mapa"
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(`${imovel.endereco.rua} ${imovel.endereco.numero}, ${imovel.endereco.bairro}, ${imovel.endereco.cidade}, ${imovel.endereco.estado}`)}&output=embed&z=16`}
-                    width="100%"
-                    height="320"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                </div>
-                <a
-                  href={`https://maps.google.com/maps?q=${encodeURIComponent(`${imovel.endereco.rua} ${imovel.endereco.numero}, ${imovel.endereco.bairro}, ${imovel.endereco.cidade}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-[var(--color-gold)] hover:text-[var(--color-dark)] transition-colors mt-3"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  Abrir no Google Maps
-                </a>
+                {(() => {
+                  const ruaNum = [imovel.endereco.rua, imovel.endereco.numero].filter(Boolean).join(', ')
+                  const partes = [
+                    ruaNum || null,
+                    imovel.endereco.complemento || null,
+                    `${imovel.endereco.bairro}, ${imovel.endereco.cidade}/${imovel.endereco.estado}`,
+                    imovel.endereco.cep ? `CEP ${imovel.endereco.cep}` : null,
+                  ].filter(Boolean)
+                  const mapQuery = [imovel.endereco.rua, imovel.endereco.numero, imovel.endereco.bairro, imovel.endereco.cidade, imovel.endereco.estado].filter(Boolean).join(', ')
+                  return (
+                    <>
+                      <p className="text-gray-600 mt-6 mb-5">{partes.join(' · ')}</p>
+                      <div className="relative w-full rounded-none overflow-hidden border border-[var(--color-border)]" style={{ height: 320 }}>
+                        <iframe
+                          title="Localização no mapa"
+                          src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed&z=16`}
+                          width="100%"
+                          height="320"
+                          style={{ border: 0 }}
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                        />
+                      </div>
+                      <a
+                        href={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-[var(--color-gold)] hover:text-[var(--color-dark)] transition-colors mt-3"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Abrir no Google Maps
+                      </a>
+                    </>
+                  )
+                })()}
               </div>
             </div>
 

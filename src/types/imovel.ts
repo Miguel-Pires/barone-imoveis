@@ -30,8 +30,8 @@ export interface Video {
 }
 
 export interface Endereco {
-  rua: string
-  numero: string
+  rua?: string
+  numero?: string
   complemento?: string
   bairro: string
   cidade: string

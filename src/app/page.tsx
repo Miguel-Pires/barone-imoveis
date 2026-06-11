@@ -2,7 +2,7 @@ import Image from 'next/image'
 import { getImoveis, getCorretor } from '@/lib/db'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import ImovelCard from '@/components/ImovelCard'
+import CatalogoImoveis from '@/components/CatalogoImoveis'
 import WhatsAppFloat from '@/components/WhatsAppFloat'
 
 const WHATSAPP_CONTATO = encodeURIComponent('Olá, gostaria de agendar uma visita ou tirar dúvidas sobre imóveis.')
@@ -14,8 +14,6 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.imoveisbarone.com'
 export default async function HomePage() {
   const [imoveis, corretor] = await Promise.all([getImoveis(true), getCorretor()])
   const WHATSAPP = corretor.whatsapp
-  const destaques = imoveis.filter(i => i.destaque)
-  const outros = imoveis.filter(i => !i.destaque)
 
   const localBusinessSchema = {
     '@context': 'https://schema.org',
@@ -111,41 +109,7 @@ export default async function HomePage() {
         </section>
 
         {/* Imóveis */}
-        <section id="imoveis" className="max-w-7xl mx-auto px-6 py-24">
-          {destaques.length > 0 && (
-            <>
-              <div className="mb-12">
-                <p className="text-[var(--color-gold)] text-xs tracking-[0.3em] uppercase mb-3">Selecionados para você</p>
-                <h2 className="text-4xl md:text-5xl font-light text-[var(--color-dark)] gold-line" style={{ fontFamily: 'var(--font-serif)' }}>
-                  Imóveis em Destaque
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-                {destaques.map(imovel => <ImovelCard key={imovel.id} imovel={imovel} />)}
-              </div>
-            </>
-          )}
-
-          {outros.length > 0 && (
-            <>
-              <div className="mb-12">
-                <h2 className="text-4xl md:text-5xl font-light text-[var(--color-dark)] gold-line" style={{ fontFamily: 'var(--font-serif)' }}>
-                  {destaques.length > 0 ? 'Outros Imóveis' : 'Todos os Imóveis'}
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {outros.map(imovel => <ImovelCard key={imovel.id} imovel={imovel} />)}
-              </div>
-            </>
-          )}
-
-          {imoveis.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-gray-400 text-lg" style={{ fontFamily: 'var(--font-serif)' }}>Novos imóveis em breve.</p>
-              <p className="text-gray-500 text-sm mt-2">Entre em contato para saber das últimas oportunidades.</p>
-            </div>
-          )}
-        </section>
+        <CatalogoImoveis imoveis={imoveis} />
 
         {/* Sobre */}
         <section id="sobre" className="bg-[var(--color-dark)] text-white">
