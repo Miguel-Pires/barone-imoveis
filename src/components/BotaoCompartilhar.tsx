@@ -9,8 +9,8 @@ interface Props {
   bairro: string
   preco: string
   area: number
-  quartos: number
-  banheiros: number
+  quartos?: number
+  banheiros?: number
   url: string
 }
 
@@ -32,7 +32,7 @@ export default function BotaoCompartilhar({ titulo, bairro, preco, area, quartos
     `*${titulo}*\n` +
     `${bairro}, São Paulo\n` +
     `Valor: ${preco}\n` +
-    `${area}m² · ${quartos} dorm${quartos !== 1 ? 's' : ''} · ${banheiros} banh${banheiros !== 1 ? 's' : ''}\n\n` +
+    `${area}m²${quartos != null ? ` · ${quartos} dorm${quartos !== 1 ? 's' : ''}` : ''}${banheiros != null ? ` · ${banheiros} banh${banheiros !== 1 ? 's' : ''}` : ''}\n\n` +
     `Veja todos os detalhes:\n${url}\n\n` +
     `_Barone Imóveis — Alto padrão no centro de SP_`
 

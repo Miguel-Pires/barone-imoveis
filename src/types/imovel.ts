@@ -1,4 +1,4 @@
-export type TipoImovel = 'apartamento' | 'cobertura' | 'studio' | 'loft' | 'penthouse'
+export type TipoImovel = 'apartamento' | 'cobertura' | 'studio' | 'loft' | 'penthouse' | 'terreno' | 'loteamento'
 export type StatusImovel = 'lancamento' | 'em_construcao' | 'pronto' | 'usado'
 export type StatusAnuncio = 'ativo' | 'inativo' | 'vendido'
 
@@ -55,8 +55,8 @@ export interface Imovel {
   precoIPTU?: number
   areaTotal: number
   areaUtil?: number
-  quartos: number
-  banheiros: number
+  quartos?: number
+  banheiros?: number
   vagas: number
   suites?: number
   andares?: number

@@ -12,6 +12,7 @@ import type { Metadata } from 'next'
 
 const TIPO_LABEL: Record<string, string> = {
   apartamento: 'Apartamento', cobertura: 'Cobertura', studio: 'Studio', loft: 'Loft', penthouse: 'Penthouse',
+  terreno: 'Terreno', loteamento: 'Loteamento',
 }
 const STATUS_LABEL: Record<string, string> = {
   lancamento: 'Lançamento', em_construcao: 'Em Construção', pronto: 'Pronto para Morar', usado: 'Revenda',
@@ -39,9 +40,9 @@ function buildDescription(imovel: Awaited<ReturnType<typeof getImovelBySlug>>): 
   const preco = new Intl.NumberFormat('pt-BR', {
     style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0,
   }).format(imovel.preco)
-  const dorms = `${imovel.quartos} ${imovel.quartos === 1 ? 'dormitório' : 'dormitórios'}`
+  const dorms = imovel.quartos != null ? `${imovel.quartos} ${imovel.quartos === 1 ? 'dormitório' : 'dormitórios'}, ` : ''
   const vagas = `${imovel.vagas} ${imovel.vagas === 1 ? 'vaga' : 'vagas'}`
-  return `${tipo} à venda em ${bairro}, São Paulo. ${imovel.areaTotal}m², ${dorms}, ${vagas}. A partir de ${preco}. Barone Imóveis.`
+  return `${tipo} à venda em ${bairro}, São Paulo. ${imovel.areaTotal}m², ${dorms}${vagas}. A partir de ${preco}. Barone Imóveis.`
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -54,7 +55,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const tipo = TIPO_LABEL[imovel.tipo] ?? imovel.tipo
   const bairro = imovel.endereco.bairro
   const description = buildDescription(imovel)
-  const title = `${tipo} em ${bairro}, SP · ${imovel.areaTotal}m² · ${imovel.quartos} ${imovel.quartos === 1 ? 'dorm' : 'dorms'} — Barone Imóveis`
+  const dormsTitle = imovel.quartos != null ? ` · ${imovel.quartos} ${imovel.quartos === 1 ? 'dorm' : 'dorms'}` : ''
+  const title = `${tipo} em ${bairro}, SP · ${imovel.areaTotal}m²${dormsTitle} — Barone Imóveis`
   const keywords = [
     `${tipo.toLowerCase()} ${bairro.toLowerCase()} são paulo`,
     `${tipo.toLowerCase()} à venda ${bairro.toLowerCase()}`,
@@ -126,8 +128,8 @@ export default async function ImovelPage({ params }: Props) {
       value: imovel.areaTotal,
       unitCode: 'MTK',
     },
-    numberOfRooms: imovel.quartos,
-    numberOfBathroomsTotal: imovel.banheiros,
+    ...(imovel.quartos != null && { numberOfRooms: imovel.quartos }),
+    ...(imovel.banheiros != null && { numberOfBathroomsTotal: imovel.banheiros }),
     additionalType: tipo,
   }
 
@@ -181,8 +183,8 @@ export default async function ImovelPage({ params }: Props) {
               {(() => {
                 const specs = [
                   { label: 'Área total', value: `${imovel.areaTotal}m²` },
-                  { label: imovel.quartos === 1 ? 'Dormitório' : 'Dormitórios', value: String(imovel.quartos) },
-                  { label: imovel.banheiros === 1 ? 'Banheiro' : 'Banheiros', value: String(imovel.banheiros) },
+                  ...(imovel.quartos != null ? [{ label: imovel.quartos === 1 ? 'Dormitório' : 'Dormitórios', value: String(imovel.quartos) }] : []),
+                  ...(imovel.banheiros != null ? [{ label: imovel.banheiros === 1 ? 'Banheiro' : 'Banheiros', value: String(imovel.banheiros) }] : []),
                   { label: imovel.vagas === 1 ? 'Vaga' : 'Vagas', value: String(imovel.vagas) },
                   ...(imovel.suites ? [{ label: 'Suítes', value: String(imovel.suites) }] : []),
                   ...(imovel.andarUnidade ? [{ label: 'Andar', value: `${imovel.andarUnidade}º` }] : []),

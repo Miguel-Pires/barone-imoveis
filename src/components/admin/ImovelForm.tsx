@@ -399,6 +399,8 @@ export default function ImovelForm({ imovel }: Props) {
               <option value="cobertura">Cobertura</option>
               <option value="loft">Loft</option>
               <option value="penthouse">Penthouse</option>
+              <option value="terreno">Terreno</option>
+              <option value="loteamento">Loteamento</option>
             </select>
           </div>
           <div>
@@ -505,12 +507,12 @@ export default function ImovelForm({ imovel }: Props) {
             <input type="number" className={inputCls} value={form.areaUtil ?? ''} onChange={e => set('areaUtil', Number(e.target.value))} min={0} />
           </div>
           <div>
-            <label className={labelCls}>Dormitórios *</label>
-            <input type="number" className={inputCls} value={form.quartos || ''} onChange={e => set('quartos', Number(e.target.value))} required min={0} max={20} />
+            <label className={labelCls}>Dormitórios</label>
+            <input type="number" className={inputCls} value={form.quartos ?? ''} onChange={e => set('quartos', e.target.value ? Number(e.target.value) : undefined)} min={0} max={20} />
           </div>
           <div>
-            <label className={labelCls}>Banheiros *</label>
-            <input type="number" className={inputCls} value={form.banheiros || ''} onChange={e => set('banheiros', Number(e.target.value))} required min={1} max={20} />
+            <label className={labelCls}>Banheiros</label>
+            <input type="number" className={inputCls} value={form.banheiros ?? ''} onChange={e => set('banheiros', e.target.value ? Number(e.target.value) : undefined)} min={0} max={20} />
           </div>
           <div>
             <label className={labelCls}>Vagas</label>

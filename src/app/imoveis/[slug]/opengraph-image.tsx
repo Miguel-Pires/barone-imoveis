@@ -10,6 +10,8 @@ const TIPO_LABEL: Record<string, string> = {
   studio: 'Studio',
   loft: 'Loft',
   penthouse: 'Penthouse',
+  terreno: 'Terreno',
+  loteamento: 'Loteamento',
 }
 
 function formatPrecoOG(valor: number): string {
@@ -145,10 +147,14 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
           <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '20px' }}>
             {imovel.areaTotal}m²
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '20px' }}>·</span>
-          <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '20px' }}>
-            {imovel.quartos} {imovel.quartos === 1 ? 'dorm.' : 'dorms.'}
-          </span>
+          {imovel.quartos != null && (
+            <>
+              <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '20px' }}>·</span>
+              <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '20px' }}>
+                {imovel.quartos} {imovel.quartos === 1 ? 'dorm.' : 'dorms.'}
+              </span>
+            </>
+          )}
           <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '20px' }}>·</span>
           <span style={{ color: '#B8975A', fontSize: '26px', fontWeight: 500 }}>
             {preco}
