@@ -918,8 +918,8 @@ export default function ImovelForm({ imovel }: Props) {
             <input className={inputCls} value={form.endereco?.complemento ?? ''} onChange={e => set('endereco.complemento', e.target.value)} />
           </div>
           <div>
-            <label className={labelCls}>Bairro *</label>
-            <input className={inputCls} value={form.endereco?.bairro ?? ''} onChange={e => set('endereco.bairro', e.target.value)} required />
+            <label className={labelCls}>Bairro</label>
+            <input className={inputCls} value={form.endereco?.bairro ?? ''} onChange={e => set('endereco.bairro', e.target.value)} />
           </div>
           <div>
             <label className={labelCls}>CEP</label>

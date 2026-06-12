@@ -42,7 +42,8 @@ function buildDescription(imovel: Awaited<ReturnType<typeof getImovelBySlug>>): 
   }).format(imovel.preco)
   const dorms = imovel.quartos != null ? `${imovel.quartos} ${imovel.quartos === 1 ? 'dormitório' : 'dormitórios'}, ` : ''
   const vagas = `${imovel.vagas} ${imovel.vagas === 1 ? 'vaga' : 'vagas'}`
-  return `${tipo} à venda em ${bairro}, São Paulo. ${imovel.areaTotal}m², ${dorms}${vagas}. A partir de ${preco}. Barone Imóveis.`
+  const localizacao = bairro ? ` em ${bairro}, São Paulo` : ' em São Paulo'
+  return `${tipo} à venda${localizacao}. ${imovel.areaTotal}m², ${dorms}${vagas}. A partir de ${preco}. Barone Imóveis.`
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -56,13 +57,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const bairro = imovel.endereco.bairro
   const description = buildDescription(imovel)
   const dormsTitle = imovel.quartos != null ? ` · ${imovel.quartos} ${imovel.quartos === 1 ? 'dorm' : 'dorms'}` : ''
-  const title = `${tipo} em ${bairro}, SP · ${imovel.areaTotal}m²${dormsTitle} — Barone Imóveis`
+  const localTitle = bairro ? ` em ${bairro}, SP` : ', SP'
+  const title = `${tipo}${localTitle} · ${imovel.areaTotal}m²${dormsTitle} — Barone Imóveis`
   const keywords = [
-    `${tipo.toLowerCase()} ${bairro.toLowerCase()} são paulo`,
-    `${tipo.toLowerCase()} à venda ${bairro.toLowerCase()}`,
-    `imóvel alto padrão ${bairro.toLowerCase()} sp`,
+    bairro ? `${tipo.toLowerCase()} ${bairro.toLowerCase()} são paulo` : `${tipo.toLowerCase()} são paulo`,
+    bairro ? `${tipo.toLowerCase()} à venda ${bairro.toLowerCase()}` : `${tipo.toLowerCase()} à venda`,
+    `imóvel alto padrão sp`,
     `comprar ${tipo.toLowerCase()} centro sp`,
-    `barone imóveis ${bairro.toLowerCase()}`,
+    `barone imóveis${bairro ? ` ${bairro.toLowerCase()}` : ''}`,
   ].join(', ')
 
   return {
@@ -97,7 +99,7 @@ export default async function ImovelPage({ params }: Props) {
   const imovelUrl = `${base}/imoveis/${imovel.slug}`
 
   const whatsappMsg = encodeURIComponent(
-    `Olá! Tenho interesse no imóvel *${imovel.titulo}* em ${imovel.endereco.bairro}.\n\nLink: ${imovelUrl}\n\nPoderia me dar mais informações?`
+    `Olá! Tenho interesse no imóvel *${imovel.titulo}*${imovel.endereco.bairro ? ` em ${imovel.endereco.bairro}` : ''}.\n\nLink: ${imovelUrl}\n\nPoderia me dar mais informações?`
   )
   const tipo = TIPO_LABEL[imovel.tipo] ?? imovel.tipo
   const capaUrl = imovel.imagens.find(i => i.destaque)?.url ?? imovel.imagens[0]?.url
@@ -165,7 +167,7 @@ export default async function ImovelPage({ params }: Props) {
 
               <div className="flex items-center gap-3 mb-3 flex-wrap">
                 <span className="text-[10px] tracking-[0.25em] text-[var(--color-gold)] uppercase font-medium">
-                  {TIPO_LABEL[imovel.tipo]} · {imovel.endereco.bairro}
+                  {TIPO_LABEL[imovel.tipo]}{imovel.endereco.bairro ? ` · ${imovel.endereco.bairro}` : ''}
                 </span>
                 <span className="text-[10px] tracking-widest uppercase bg-[var(--color-dark)] text-white px-2.5 py-1">
                   {STATUS_LABEL[imovel.status]}
@@ -295,7 +297,7 @@ export default async function ImovelPage({ params }: Props) {
                   const partes = [
                     ruaNum || null,
                     imovel.endereco.complemento || null,
-                    `${imovel.endereco.bairro}, ${imovel.endereco.cidade}/${imovel.endereco.estado}`,
+                    `${[imovel.endereco.bairro, `${imovel.endereco.cidade}/${imovel.endereco.estado}`].filter(Boolean).join(', ')}`,
                     imovel.endereco.cep ? `CEP ${imovel.endereco.cep}` : null,
                   ].filter(Boolean)
                   const mapQuery = [imovel.endereco.rua, imovel.endereco.numero, imovel.endereco.bairro, imovel.endereco.cidade, imovel.endereco.estado].filter(Boolean).join(', ')
@@ -400,7 +402,7 @@ export default async function ImovelPage({ params }: Props) {
                   <div className="border-t border-[var(--color-border)] pt-4">
                     <p className="text-xs text-gray-400 mb-1">Localização</p>
                     <p className="text-xs text-gray-600">
-                      {imovel.endereco.bairro}, {imovel.endereco.cidade}/{imovel.endereco.estado}
+                      {[imovel.endereco.bairro, `${imovel.endereco.cidade}/${imovel.endereco.estado}`].filter(Boolean).join(', ')}
                     </p>
                   </div>
                 </div>

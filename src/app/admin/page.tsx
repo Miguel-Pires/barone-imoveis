@@ -57,7 +57,7 @@ export default async function AdminDashboard() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[var(--color-dark)] truncate">{imovel.titulo}</p>
-                <p className="text-xs text-gray-400">{imovel.endereco.bairro} · {formatPreco(imovel.preco)}</p>
+                <p className="text-xs text-gray-400">{imovel.endereco.bairro ? `${imovel.endereco.bairro} · ` : ''}{formatPreco(imovel.preco)}</p>
               </div>
               <span className={`text-[10px] tracking-widest uppercase px-2.5 py-1 shrink-0 ${
                 imovel.statusAnuncio === 'ativo' ? 'bg-green-50 text-green-600' :

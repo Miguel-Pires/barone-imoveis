@@ -50,7 +50,7 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
   }
 
   const tipo = TIPO_LABEL[imovel.tipo] ?? imovel.tipo
-  const bairro = imovel.endereco.bairro
+  const bairro = imovel.endereco.bairro ?? ''
   const preco = formatPrecoOG(imovel.preco)
   const capa = imovel.imagens.find(i => i.destaque)?.url ?? imovel.imagens[0]?.url
 
@@ -114,7 +114,7 @@ export default async function OGImage({ params }: { params: Promise<{ slug: stri
               fontWeight: 500,
             }}
           >
-            {bairro.toUpperCase()} · {tipo.toUpperCase()}
+            {bairro ? `${bairro.toUpperCase()} · ` : ''}{tipo.toUpperCase()}
           </span>
         </div>
 

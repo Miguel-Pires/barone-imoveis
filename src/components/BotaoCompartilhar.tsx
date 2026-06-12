@@ -6,7 +6,7 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.imoveisbarone.com'
 
 interface Props {
   titulo: string
-  bairro: string
+  bairro?: string
   preco: string
   area: number
   quartos?: number
@@ -30,7 +30,7 @@ export default function BotaoCompartilhar({ titulo, bairro, preco, area, quartos
   const mensagem =
     `Olá! Vi esse imóvel pela Barone Imóveis e pensei em você.\n\n` +
     `*${titulo}*\n` +
-    `${bairro}, São Paulo\n` +
+    `${bairro ? `${bairro}, ` : ''}São Paulo\n` +
     `Valor: ${preco}\n` +
     `${area}m²${quartos != null ? ` · ${quartos} dorm${quartos !== 1 ? 's' : ''}` : ''}${banheiros != null ? ` · ${banheiros} banh${banheiros !== 1 ? 's' : ''}` : ''}\n\n` +
     `Veja todos os detalhes:\n${url}\n\n` +

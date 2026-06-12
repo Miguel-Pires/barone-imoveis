@@ -62,7 +62,7 @@ export default function ImovelCard({ imovel }: Props) {
         <div className="p-5">
           <div className="flex items-start justify-between gap-2 mb-1">
             <p className="text-[10px] tracking-[0.2em] text-[var(--color-gold)] uppercase font-medium">
-              {TIPO_LABEL[imovel.tipo]} · {imovel.endereco.bairro}
+              {TIPO_LABEL[imovel.tipo]}{imovel.endereco.bairro ? ` · ${imovel.endereco.bairro}` : ''}
             </p>
           </div>
 

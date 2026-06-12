@@ -142,7 +142,7 @@ export default function AdminListaImoveis({ imoveis }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-[var(--color-dark)] text-sm truncate">{imovel.titulo}</p>
                   <p className="text-xs text-gray-400 truncate">
-                    {imovel.endereco.bairro} · {TIPO_LABEL[imovel.tipo] ?? imovel.tipo} · {imovel.areaTotal}m²
+                    {imovel.endereco.bairro ? `${imovel.endereco.bairro} · ` : ''}{TIPO_LABEL[imovel.tipo] ?? imovel.tipo} · {imovel.areaTotal}m²
                   </p>
                   <p className="text-xs text-gray-400 md:hidden">{formatPreco(imovel.preco)}</p>
                 </div>
