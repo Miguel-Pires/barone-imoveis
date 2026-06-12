@@ -27,6 +27,7 @@ function BtnFiltro({ ativo, onClick, children }: { ativo: boolean; onClick: () =
 export default function CatalogoImoveis({ imoveis }: Props) {
   const [busca, setBusca] = useState('')
   const [bairro, setBairro] = useState('')
+  const [tipo, setTipo] = useState('')
   const [quartos, setQuartos] = useState<number | null>(null)
   const [suites, setSuites] = useState<number | null>(null)
   const [vagas, setVagas] = useState<number | null>(null)
@@ -41,11 +42,12 @@ export default function CatalogoImoveis({ imoveis }: Props) {
     return Array.from(set).sort()
   }, [imoveis])
 
-  const filtrosAtivos = !!(busca || bairro || quartos !== null || suites !== null || vagas !== null || precoMin !== '' || precoMax !== '' || areaMin !== '' || areaMax !== '')
+  const filtrosAtivos = !!(busca || bairro || tipo || quartos !== null || suites !== null || vagas !== null || precoMin !== '' || precoMax !== '' || areaMin !== '' || areaMax !== '')
 
   function limparFiltros() {
     setBusca('')
     setBairro('')
+    setTipo('')
     setQuartos(null)
     setSuites(null)
     setVagas(null)
@@ -63,7 +65,9 @@ export default function CatalogoImoveis({ imoveis }: Props) {
         if (!campos.includes(q)) return false
       }
       if (bairro && i.endereco.bairro !== bairro) return false
+      if (tipo && i.tipo !== tipo) return false
       if (quartos !== null) {
+        if (i.quartos == null) return false
         if (quartos === 4 ? i.quartos < 4 : i.quartos !== quartos) return false
       }
       if (suites !== null) {
@@ -140,7 +144,20 @@ export default function CatalogoImoveis({ imoveis }: Props) {
         {/* Painel de filtros */}
         {mostrarFiltros && (
           <div className="border border-[var(--color-border)] bg-white p-4 md:p-5 space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div>
+                <label className="block text-[10px] tracking-widest uppercase text-gray-400 mb-2">Tipo</label>
+                <select value={tipo} onChange={e => setTipo(e.target.value)} className={inputCls}>
+                  <option value="">Todos</option>
+                  <option value="apartamento">Apartamento</option>
+                  <option value="studio">Studio</option>
+                  <option value="cobertura">Cobertura</option>
+                  <option value="loft">Loft</option>
+                  <option value="penthouse">Penthouse</option>
+                  <option value="terreno">Terreno</option>
+                  <option value="loteamento">Loteamento</option>
+                </select>
+              </div>
               <div>
                 <label className="block text-[10px] tracking-widest uppercase text-gray-400 mb-2">Bairro</label>
                 <select value={bairro} onChange={e => setBairro(e.target.value)} className={inputCls}>
