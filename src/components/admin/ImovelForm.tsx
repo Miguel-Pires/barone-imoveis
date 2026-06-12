@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Imovel, Imagem, PlantaBaixa, Video } from '@/types/imovel'
 import { v4 as uuidv4 } from 'uuid'
+import { supabaseBrowser, STORAGE_BUCKET } from '@/lib/supabase-client'
 
 interface Props {
   imovel?: Imovel
@@ -70,12 +71,24 @@ export default function ImovelForm({ imovel }: Props) {
   }
 
   async function uploadFoto(file: File): Promise<string | null> {
-    const fd = new FormData()
-    fd.append('file', file)
-    const res = await fetch('/api/upload', { method: 'POST', body: fd })
-    if (!res.ok) return null
-    const { url } = await res.json()
-    return url
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+
+    // 1. Pede URL assinada ao servidor (payload pequeno — evita limite 4.5MB do Vercel)
+    const signRes = await fetch('/api/upload/sign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contentType: file.type, ext }),
+    })
+    if (!signRes.ok) return null
+    const { token, path, publicUrl } = await signRes.json()
+
+    // 2. Upload direto ao Supabase Storage (bypassa o Vercel)
+    const { error } = await supabaseBrowser.storage
+      .from(STORAGE_BUCKET)
+      .uploadToSignedUrl(path, token, file, { contentType: file.type })
+    if (error) return null
+
+    return publicUrl
   }
 
   async function handleFotos(e: React.ChangeEvent<HTMLInputElement>) {
