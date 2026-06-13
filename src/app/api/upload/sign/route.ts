@@ -7,17 +7,15 @@ const ALLOWED_IMAGES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 const ALLOWED_VIDEOS = ['video/mp4', 'video/quicktime', 'video/webm']
 const ALLOWED = [...ALLOWED_IMAGES, ...ALLOWED_VIDEOS]
 
-// Garante que o bucket aceita todos os MIME types necessários.
-// A service role key bypassa RLS mas não bypassa restrições de MIME type
-// configuradas no bucket — por isso atualizamos via updateBucket.
-let bucketConfigured = false
-async function ensureBucketAllowsMimeTypes() {
-  if (bucketConfigured) return
-  await supabaseAdmin.storage.updateBucket(STORAGE_BUCKET, {
-    allowedMimeTypes: ALLOWED,
+// Roda uma vez por instância serverless. Remove restrições de MIME type do
+// bucket — a service role key bypassa RLS mas NÃO bypassa allowedMimeTypes,
+// por isso precisamos configurar o bucket diretamente.
+// public: true é obrigatório pelo SDK; o bucket já é público (usa getPublicUrl).
+const bucketReady = supabaseAdmin.storage
+  .updateBucket(STORAGE_BUCKET, { public: true, allowedMimeTypes: null })
+  .then(({ error }) => {
+    if (error) console.error('[upload/sign] updateBucket:', error.message)
   })
-  bucketConfigured = true
-}
 
 export async function POST(req: NextRequest) {
   if (!checkAdminAuth(req)) {
@@ -31,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Tipo não permitido' }, { status: 400 })
     }
 
-    await ensureBucketAllowsMimeTypes()
+    await bucketReady
 
     const filename = `${uuidv4()}.${(ext as string)?.toLowerCase() ?? 'jpg'}`
 
