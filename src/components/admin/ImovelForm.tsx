@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Imovel, Imagem, PlantaBaixa, Video } from '@/types/imovel'
 import { v4 as uuidv4 } from 'uuid'
+import { supabaseBrowser, STORAGE_BUCKET } from '@/lib/supabase-client'
 
 interface Props {
   imovel?: Imovel
@@ -71,18 +72,23 @@ export default function ImovelForm({ imovel }: Props) {
 
   async function uploadFoto(file: File): Promise<string | null> {
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    // Edge Runtime faz stream direto ao Supabase com service role key —
-    // sem limite de tamanho nem restrição de MIME type do bucket.
-    const res = await fetch('/api/upload/stream', {
+
+    // 1. Pede token assinado ao servidor (JSON pequeno — não passa pelo limite do Vercel)
+    const signRes = await fetch('/api/upload/sign', {
       method: 'POST',
-      headers: { 'x-content-type': file.type, 'x-ext': ext },
-      body: file,
-      // @ts-ignore
-      duplex: 'half',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contentType: file.type, ext }),
     })
-    if (!res.ok) return null
-    const { url } = await res.json()
-    return url ?? null
+    if (!signRes.ok) return null
+    const { token, path, publicUrl } = await signRes.json()
+
+    // 2. Upload direto do browser ao Supabase — bypassa Vercel completamente
+    const { error } = await supabaseBrowser.storage
+      .from(STORAGE_BUCKET)
+      .uploadToSignedUrl(path, token, file, { contentType: file.type })
+    if (error) return null
+
+    return publicUrl
   }
 
   async function handleFotos(e: React.ChangeEvent<HTMLInputElement>) {
