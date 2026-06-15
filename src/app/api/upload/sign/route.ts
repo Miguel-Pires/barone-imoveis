@@ -24,7 +24,7 @@ const bucketReady = fetch(`${SUPABASE_URL}/storage/v1/bucket/${STORAGE_BUCKET}`,
     id: STORAGE_BUCKET,
     name: STORAGE_BUCKET,
     public: true,
-    file_size_limit: 209715200, // 200 MB em bytes
+    file_size_limit: null, // herda o limite do projeto (50 MB no free tier)
     allowed_mime_types: null,
   }),
 }).then(async (res) => {
