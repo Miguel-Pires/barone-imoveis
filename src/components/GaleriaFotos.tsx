@@ -92,6 +92,17 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
             draggable={false}
             priority={ativa === 0}
           />
+
+          {/* Pré-carrega as 2 fotos anteriores e as 2 seguintes */}
+          {sorted.length > 1 && [-2, -1, 1, 2].map(offset => {
+            const idx = (ativa + offset + sorted.length) % sorted.length
+            if (idx === ativa) return null
+            return (
+              <div key={`pre-${sorted[idx].id}`} aria-hidden="true" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0 }}>
+                <Image src={sorted[idx].url} alt="" fill sizes="100vw" quality={70} priority />
+              </div>
+            )
+          })}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
           {sorted.length > 1 && (
