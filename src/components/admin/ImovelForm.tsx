@@ -936,7 +936,36 @@ export default function ImovelForm({ imovel }: Props) {
 
       {/* Endereço */}
       <div className={sectionCls}>
-        <h2 className="text-lg font-light mb-6" style={{ fontFamily: 'var(--font-serif)' }}>Endereço</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-light" style={{ fontFamily: 'var(--font-serif)' }}>Endereço</h2>
+          <button
+            type="button"
+            onClick={async () => {
+              const e = form.endereco
+              const parts = [e?.rua, e?.numero, e?.bairro, e?.cidade, e?.estado].filter(Boolean)
+              if (parts.length < 2) { setMsg('Preencha pelo menos rua e cidade antes de localizar.'); return }
+              setMsg('Localizando...')
+              const res = await fetch(`/api/geocode?address=${encodeURIComponent(parts.join(', '))}`)
+              if (!res.ok) { setMsg('Endereço não encontrado no Maps.'); return }
+              const { lat, lng } = await res.json()
+              set('endereco.latitude', lat)
+              set('endereco.longitude', lng)
+              setMsg(`✓ Coordenadas salvas: ${lat.toFixed(5)}, ${lng.toFixed(5)}`)
+            }}
+            className="flex items-center gap-1.5 text-xs text-[var(--color-gold)] hover:text-[var(--color-dark)] transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {form.endereco?.latitude ? 'Relocalizar no Maps' : 'Localizar no Maps'}
+          </button>
+        </div>
+        {form.endereco?.latitude && (
+          <p className="text-xs text-gray-400 -mt-4 mb-4">
+            📍 {form.endereco.latitude.toFixed(5)}, {form.endereco.longitude?.toFixed(5)} — usado para filtro por proximidade
+          </p>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
             <label className={labelCls}>Rua / Avenida</label>

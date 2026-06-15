@@ -8,6 +8,16 @@ interface Props {
   imoveis: Imovel[]
 }
 
+const RAIO_KM = 1.5
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 function BtnFiltro({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -57,6 +67,16 @@ export default function CatalogoImoveis({ imoveis }: Props) {
     setAreaMax('')
   }
 
+  // Centro do bairro selecionado: média das coordenadas dos imóveis naquele bairro
+  const centroBairro = useMemo(() => {
+    if (!bairro) return null
+    const comCoords = imoveis.filter(i => i.endereco.bairro === bairro && i.endereco.latitude && i.endereco.longitude)
+    if (!comCoords.length) return null
+    const lat = comCoords.reduce((s, i) => s + i.endereco.latitude!, 0) / comCoords.length
+    const lng = comCoords.reduce((s, i) => s + i.endereco.longitude!, 0) / comCoords.length
+    return { lat, lng }
+  }, [imoveis, bairro])
+
   const filtrados = useMemo(() => {
     return imoveis.filter(i => {
       if (busca) {
@@ -64,7 +84,17 @@ export default function CatalogoImoveis({ imoveis }: Props) {
         const campos = [i.titulo, i.endereco.bairro, i.nomeEmpreendimento ?? ''].join(' ').toLowerCase()
         if (!campos.includes(q)) return false
       }
-      if (bairro && i.endereco.bairro !== bairro) return false
+      if (bairro) {
+        // Match exato por nome de bairro
+        if (i.endereco.bairro === bairro) { /* ok */ }
+        // OU dentro do raio de 1,5km do centro desse bairro (se houver coordenadas)
+        else if (centroBairro && i.endereco.latitude && i.endereco.longitude) {
+          const dist = haversineKm(centroBairro.lat, centroBairro.lng, i.endereco.latitude, i.endereco.longitude)
+          if (dist > RAIO_KM) return false
+        } else {
+          return false
+        }
+      }
       if (tipo && i.tipo !== tipo) return false
       if (quartos !== null) {
         if (i.quartos == null) return false
@@ -84,7 +114,7 @@ export default function CatalogoImoveis({ imoveis }: Props) {
       if (areaMax !== '' && i.areaTotal > areaMax) return false
       return true
     })
-  }, [imoveis, busca, bairro, quartos, suites, vagas, precoMin, precoMax, areaMin, areaMax])
+  }, [imoveis, busca, bairro, centroBairro, quartos, suites, vagas, precoMin, precoMax, areaMin, areaMax])
 
   const destaques = filtrados.filter(i => i.destaque)
   const outros = filtrados.filter(i => !i.destaque)
