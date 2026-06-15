@@ -70,14 +70,47 @@ export default function ImovelForm({ imovel }: Props) {
     })
   }
 
+  async function compressImage(file: File, maxWidth = 1920, quality = 0.85): Promise<File> {
+    if (!file.type.startsWith('image/')) return file
+    return new Promise((resolve) => {
+      const img = new window.Image()
+      const objectUrl = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl)
+        let { width, height } = img
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width)
+          width = maxWidth
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { resolve(file); return }
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file) }
+      img.src = objectUrl
+    })
+  }
+
   async function uploadFoto(file: File): Promise<string | null> {
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+    const processedFile = file.type.startsWith('image/') ? await compressImage(file) : file
+    const contentType = processedFile.type
+    const ext = contentType === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop()?.toLowerCase() ?? 'bin')
 
     // 1. Pede token assinado ao servidor (JSON pequeno — não passa pelo limite do Vercel)
     const signRes = await fetch('/api/upload/sign', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contentType: file.type, ext }),
+      body: JSON.stringify({ contentType, ext }),
     })
     if (!signRes.ok) return null
     const { token, path, publicUrl } = await signRes.json()
@@ -85,7 +118,7 @@ export default function ImovelForm({ imovel }: Props) {
     // 2. Upload direto do browser ao Supabase — bypassa Vercel completamente
     const { error } = await supabaseBrowser.storage
       .from(STORAGE_BUCKET)
-      .uploadToSignedUrl(path, token, file, { contentType: file.type })
+      .uploadToSignedUrl(path, token, processedFile, { contentType })
     if (error) return null
 
     return publicUrl
