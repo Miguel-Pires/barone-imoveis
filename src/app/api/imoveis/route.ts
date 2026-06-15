@@ -17,8 +17,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const imovel = await createImovel(body)
 
-    revalidatePath(`/imoveis/${imovel.slug}`)
-    revalidatePath('/')
+    revalidatePath('/', 'layout')
 
     return NextResponse.json(imovel, { status: 201 })
   } catch (err) {

@@ -24,8 +24,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const updated = await updateImovel(id, body)
     if (!updated) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
 
-    revalidatePath(`/imoveis/${updated.slug}`)
-    revalidatePath('/')
+    revalidatePath('/', 'layout')
 
     return NextResponse.json(updated)
   } catch {
@@ -43,8 +42,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   const ok = await deleteImovel(id)
   if (!ok) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
 
-  if (imovel) revalidatePath(`/imoveis/${imovel.slug}`)
-  revalidatePath('/')
+  revalidatePath('/', 'layout')
 
   return NextResponse.json({ success: true })
 }

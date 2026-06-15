@@ -18,7 +18,7 @@ const STATUS_LABEL: Record<string, string> = {
   lancamento: 'Lançamento', em_construcao: 'Em Construção', pronto: 'Pronto para Morar', usado: 'Revenda',
 }
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 interface Props {
   params: Promise<{ slug: string }>
