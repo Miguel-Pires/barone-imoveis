@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getImoveis, formatPreco } from '@/lib/db'
+import CompressorFotos from '@/components/admin/CompressorFotos'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,6 +33,10 @@ export default async function AdminDashboard() {
             </p>
           </div>
         ))}
+      </div>
+
+      <div className="mb-6">
+        <CompressorFotos />
       </div>
 
       <div className="bg-white border border-[var(--color-border)]">
