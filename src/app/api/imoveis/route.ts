@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getImoveis, createImovel } from '@/lib/db'
 import { checkAdminAuth } from '@/lib/auth'
 
@@ -15,6 +16,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const imovel = await createImovel(body)
+
+    revalidatePath(`/imoveis/${imovel.slug}`)
+    revalidatePath('/')
+
     return NextResponse.json(imovel, { status: 201 })
   } catch (err) {
     const msg = err instanceof Error ? err.message : JSON.stringify(err)
