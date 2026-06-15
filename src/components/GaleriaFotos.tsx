@@ -86,6 +86,7 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
             alt={sorted[ativa].alt}
             fill
             sizes="100vw"
+            quality={70}
             className="object-contain object-center transition-opacity duration-200"
             style={{ opacity: animDir ? 0 : 1 }}
             draggable={false}
