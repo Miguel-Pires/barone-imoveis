@@ -39,10 +39,9 @@ export async function POST(req: NextRequest) {
         'Content-Type': contentType,
         'x-upsert': 'false',
       },
-      // @ts-ignore — duplex necessário para streaming do body no Edge Runtime
       body: req.body,
       duplex: 'half',
-    }
+    } as RequestInit & { duplex: string }
   )
 
   if (!uploadRes.ok) {
