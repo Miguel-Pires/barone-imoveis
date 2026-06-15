@@ -209,15 +209,18 @@ export default function GaleriaFotos({ imagens, titulo }: Props) {
 
           {/* Imagem */}
           <div
-            className="flex items-center justify-center w-full h-full px-2 md:px-14 py-14"
+            className="relative w-full h-full px-2 md:px-14 py-14"
             onClick={e => e.stopPropagation()}
           >
-            <img
+            <Image
               key={sorted[ativa].id}
               src={sorted[ativa].url}
               alt={sorted[ativa].alt}
-              className="object-contain w-full h-full"
-              style={{ maxHeight: 'calc(100vh - 7rem)', maxWidth: '100%' }}
+              fill
+              sizes="(max-width: 768px) 100vw, 90vw"
+              quality={70}
+              className="object-contain"
+              priority
               draggable={false}
             />
           </div>
