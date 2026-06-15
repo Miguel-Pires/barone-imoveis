@@ -12,7 +12,11 @@ const ALLOWED = [...ALLOWED_IMAGES, ...ALLOWED_VIDEOS]
 // por isso precisamos configurar o bucket diretamente.
 // public: true é obrigatório pelo SDK; o bucket já é público (usa getPublicUrl).
 const bucketReady = supabaseAdmin.storage
-  .updateBucket(STORAGE_BUCKET, { public: true, allowedMimeTypes: null })
+  .updateBucket(STORAGE_BUCKET, {
+    public: true,
+    allowedMimeTypes: null,
+    fileSizeLimit: '200MB',
+  })
   .then(({ error }) => {
     if (error) console.error('[upload/sign] updateBucket:', error.message)
   })
