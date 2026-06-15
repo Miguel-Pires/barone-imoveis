@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const data = await res.json() as { status: string; results: Array<{ geometry: { location: { lat: number; lng: number } } }> }
 
   if (data.status !== 'OK' || !data.results[0]) {
-    return NextResponse.json({ error: 'Endereço não encontrado' }, { status: 404 })
+    return NextResponse.json({ error: 'Endereço não encontrado', mapsStatus: data.status }, { status: 404 })
   }
 
   const { lat, lng } = data.results[0].geometry.location
